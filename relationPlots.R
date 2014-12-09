@@ -16,36 +16,56 @@
 #' plotdf(df=mtcars, file='mtcars_plots.pdf')
 #' }
 
+# options(warn=2)
+
 relationPlots <- function(df, df_T, file='output.pdf', wordy=F){
   pdf(file)
   df_T_data <- df[,df_T]
   df <- df[,!(names(df)) %in% df_T]  
   
+  act <- 0
+  bct <- 0
+  cct <- 0
+  prevSplit <- 0
+  
   for(i in 1:ncol(df)){
     if(wordy==T) print(i)
     if((class(df[,i]) %in% c('numeric', 'integer')) & length(unique(df[,i]))>15) { 
 #       screen(1)
-      close.screen(all = TRUE)    # exit split-screen mode
+      if (prevSplit==1) { close.screen(all = TRUE) }
+#       if (length(close.screen())>0) { close.screen(all = TRUE) }
+#       close.screen(all = TRUE)    # exit split-screen mode
 #       plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
 #       par(oma=c(0,0,10,0))
       split.screen(c(2,1))
       plotScat(df[,i], df_T_data, vn=names(df)[i], tn=df_T, singPlot=0)
       plotNum(df[,i], vn=names(df)[i], singPlot=0, tn=df_T)
-      
+      act <- act+1
+      prevSplit <- 1
     } else if ((class(df[,i]) %in% c('numeric', 'integer')) & length(unique(df[,i]))<=15) { 
 #       screen(1)
-      close.screen(all = TRUE)    # exit split-screen mode
+#       if (length(close.screen())>0) { close.screen(all = TRUE) }
+      if (prevSplit==1) { close.screen(all = TRUE) }
+#       close.screen(all = TRUE)    # exit split-screen mode
 #       plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
       split.screen(c(2,1))
       plotScat(df[,i], df_T_data, vn=names(df)[i], tn=df_T, singPlot=0)
       plotChar(df[,i], vn=names(df)[i], singPlot=0, tn=df_T)
 #       close.screen(all = TRUE)    # exit split-screen mode
+      bct <- bct + 1
+      prevSplit <- 1
     } else { 
+      print(close.screen())
+#       if (length(close.screen())>0) { close.screen(all = TRUE) }
+      if (prevSplit==1) { close.screen(all = TRUE) }
       plotChar(df[,i], vn=names(df)[i], singPlot=1, tn=df_T)
+      cct <- cct +1
+      prevSplit <- 0
     }
   }
   graphics.off()
   print(paste0('charts saved in ', getwd(), '/', file))
+  print(sprintf('first ct: %i / second %i / third %i',act, bct, cct))
 }
 
 
@@ -210,7 +230,6 @@ plotNum <- function(x, singPlot, tn, ...) {
 ## example
 ## plotNum(rnorm(1000)^2, vn='ssds')
 
-
 plotChar <- function(x, singPlot, tn, ...) {
   if (singPlot==0) { 
     screen(2) 
@@ -219,7 +238,7 @@ plotChar <- function(x, singPlot, tn, ...) {
     tab <- sort(table(x), decreasing=T)[1:min(length(unique(x)),50)]
     tabmiss <- round(sum(tab, na.rm=T)/length(x)*100, 1)
 
-    p2 <- barplot(tab, las=2, cex.names=0.6, col='dodgerblue', xlab = ptitle
+    p2 <- barplot(tab, las=2, cex.names=0.6, col='dodgerblue', xlab = ptitle,
                   main=paste(ptitle, ': ', tabmiss, '% of data shown', sep=''))
     
     #######################
