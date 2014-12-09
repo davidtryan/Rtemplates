@@ -24,19 +24,21 @@ relationPlots <- function(df, df_T, file='output.pdf', wordy=F){
   for(i in 1:ncol(df)){
     if(wordy==T) print(i)
     if((class(df[,i]) %in% c('numeric', 'integer')) & length(unique(df[,i]))>15) { 
-      screen(1)
-      plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+#       screen(1)
+      close.screen(all = TRUE)    # exit split-screen mode
+#       plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
       split.screen(c(2,1))
       plotScat(df[,i], df_T_data, vn=names(df)[i], tn=df_T)
       plotNum(df[,i], vn=names(df)[i], singPlot=0)
-      close.screen(all = TRUE)    # exit split-screen mode
+      
     } else if ((class(df[,i]) %in% c('numeric', 'integer')) & length(unique(df[,i]))<=15) { 
-      screen(1)
-      plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-      split.screen(c(2,1), screen=1)
+#       screen(1)
+      close.screen(all = TRUE)    # exit split-screen mode
+#       plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+      split.screen(c(2,1))
       plotScat(df[,i], df_T_data, vn=names(df)[i], tn=df_T)
       plotChar(df[,i], vn=names(df)[i], singPlot=0)
-      close.screen(all = TRUE)    # exit split-screen mode
+#       close.screen(all = TRUE)    # exit split-screen mode
     } else { 
       plotChar(df[,i], vn=names(df)[i], singPlot=1)
     }
