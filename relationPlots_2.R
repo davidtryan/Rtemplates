@@ -56,14 +56,14 @@ plotScat <- function(x, y, tn, singPlot, ...) {
     text(1,0,sprintf("Plots of %s vs %s", ptitle, tn),font=2, cex=1.25)
 
     par(mar=c(2,2,1,1))
-    plot(x, y, xlab=vn, ylab=tn)
+    plot(x, y, xlab=ptitle, ylab=tn)
     par(mar=c(2,2,1,1))
-    jitterScat(x,y,vn,tn)
+    jitterScat(x,y,ptitle,tn)
     grid()
     par(mar=c(2,2,1,1))
-    stackedBar(x,y,vn,tn)
+    stackedBar(x,y,ptitle,tn)
     par(mar=c(2,2,1,1))
-    sideBar(x,y,vn,tn)
+    sideBar(x,y,ptitle,tn)
   } else if (dim(table(x))<=15 & dim(table(y))==2) {
     
     layout(matrix(c(1,1,2,3,4,4), 3, 2, byrow=T), widths=c(1,1), heights=c(0.15,1,1))
@@ -72,9 +72,9 @@ plotScat <- function(x, y, tn, singPlot, ...) {
     plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
     text(1,0,sprintf("Plots of %s vs %s", ptitle, tn),font=2, cex=1.25)
     par(mar=c(2,2,1,1))
-    plot(x, y, xlab=vn, ylab=tn)
+    plot(x, y, xlab=ptitle, ylab=tn)
     par(mar=c(2,2,1,1))
-    stackedBar(x,y,vn,tn)
+    stackedBar(x,y,ptitle,tn)
     legend("topright", rownames(table(y, x)), pch=15, col=c("darkblue","red"), cex=0.75, bty='n')
 
   } else {
@@ -82,11 +82,11 @@ plotScat <- function(x, y, tn, singPlot, ...) {
     if (singPlot==0) {
       layout(matrix(c(1,2), 2, 1, byrow=T), widths=c(1,1), heights=c(1,1))
       ptitle <- ifelse(is.null(list(...)$vn), '', list(...)$vn)
-      plot(x,y,xlab=vn,ylab=tn)
+      plot(x,y,xlab=ptitle,ylab=tn)
       title(sprintf("Plots of %s vs %s", ptitle, tn),font=2, cex=1.25)
     } else {
       par(mfrow=c(1,1))
-      plot(x,y,xlab=vn,ylab=tn, main=sprintf("Scatterplot of %s vs %s"))
+      plot(x,y,xlab=ptitle,ylab=tn, main=sprintf("Scatterplot of %s vs %s"))
     }
   }
 }
