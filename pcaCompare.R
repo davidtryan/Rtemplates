@@ -154,9 +154,9 @@ var3 <- names(impNums)[3]
 plot(olympic_p[,var3], -pca.olympic$scores[,1], xlab=var3, ylab='score')
 abline(lm(-pca.olympic$scores[,1]~olympic_p[,var3]))
 #Overall score
-plot(-PCA.olympic$ind$coord[,1], olympic$score, xlab='Comp. 1', ylab='PCA score')
+plot(pca.olympic$scores[,1], olympic$score, xlab='Comp. 1', ylab='pca score')
 # plot(olympic_p[,c('400')], -pca.olympic$scores[,1], xlab='400', ylab='score')
-abData <- data.frame(cbind(olympic$score, -PCA.olympic$ind$coord[,1]))
+abData <- data.frame(cbind(olympic$score, pca.olympic$scores[,1]))
 abline(lm(abData$X1~(abData$X2)))
 
 #FactoMineR
@@ -213,9 +213,15 @@ charCat <- dimdesc(PCA.olympic, axes=c(1,2))$Dim.2$quanti
 names(sort(-abs(charCat[,1]))[1:length(impNums)])
 
 #Overall score
+#princomp
 par(mfrow=c(1,1))
-plot(-PCA.olympic$ind$coord[,2], olympic$score, xlab='Comp. 2', ylab='PCA score')
-abData <- data.frame(cbind(olympic$score, -PCA.olympic$ind$coord[,2]))
+plot(pca.olympic$scores[,2], olympic$score, xlab='Comp. 2', ylab='pca score')
+abData <- data.frame(cbind(olympic$score, pca.olympic$scores[,2]))
+abline(lm(abData$X1~(abData$X2)))
+#FactoMineR
+par(mfrow=c(1,1))
+plot(PCA.olympic$ind$coord[,2], olympic$score, xlab='Comp. 2', ylab='PCA score')
+abData <- data.frame(cbind(olympic$score, PCA.olympic$ind$coord[,2]))
 abline(lm(abData$X1~(abData$X2)))
 
 #princomp
