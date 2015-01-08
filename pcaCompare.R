@@ -1,5 +1,3 @@
-#Change to see commits
-
 ## References
 # http://statweb.stanford.edu/~jtaylo/courses/stats202/olympic.html
 # http://www.statistik.tuwien.ac.at/public/filz/students/seminar/ws1011/hoffmann_ausarbeitung.pdf
@@ -11,6 +9,7 @@
 ## Installing and initializing
 install.packages('ade4')
 library(ade4)
+install.packages('FactoMineR')
 library(FactoMineR)
 
 ## Loading data
@@ -157,7 +156,8 @@ abline(lm(-pca.olympic$scores[,1]~olympic_p[,var3]))
 #Overall score
 plot(-PCA.olympic$ind$coord[,1], olympic$score, xlab='Comp. 1', ylab='PCA score')
 # plot(olympic_p[,c('400')], -pca.olympic$scores[,1], xlab='400', ylab='score')
-# abline(lm(-pca.olympic$scores[,1]~olympic_p[,c('400')]))
+abData <- data.frame(cbind(olympic$score, -PCA.olympic$ind$coord[,1]))
+abline(lm(abData$X1~(abData$X2)))
 
 #FactoMineR
 par(mfrow=c(2,2))
@@ -174,6 +174,8 @@ plot(olympic_p[,var3], PCA.olympic$ind$coord[,1], xlab=var3, ylab='score')
 abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,var3]))
 #Overall score
 plot(-PCA.olympic$ind$coord[,1], olympic$score, xlab='Comp. 1', ylab='PCA score')
+abData <- data.frame(cbind(olympic$score, -PCA.olympic$ind$coord[,1]))
+abline(lm(abData$X1~(abData$X2)))
 # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
 # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
 
@@ -213,6 +215,8 @@ names(sort(-abs(charCat[,1]))[1:length(impNums)])
 #Overall score
 par(mfrow=c(1,1))
 plot(-PCA.olympic$ind$coord[,2], olympic$score, xlab='Comp. 2', ylab='PCA score')
+abData <- data.frame(cbind(olympic$score, -PCA.olympic$ind$coord[,2]))
+abline(lm(abData$X1~(abData$X2)))
 
 #princomp
 par(mfrow=c(2,2))
@@ -273,6 +277,24 @@ pointVars
 insigVars <- rownames(PCA_contrb2[order(PCA_contrb2$Dim.1),])[1:2]
 insigVars
 
+#Color individuals according to the categories' center of gravity
+# plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
+#FactoMineR
+data(decathlon)
+par(mfrow = c(1,2))
+res.PCA <- PCA(decathlon, scale.unit=T, ncp=5, quanti.sup=c(11:12), quali.sup=13, graph=T)
+par(mfrow = c(1,1))
+plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T)
+
+#princomp
+res.pca <- princomp(decathlon[,1:10], cor=T)
+catNames <- names(table(decathlon[,13]))
+plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(decathlon[,13]==catNames[1],'black','red'))
+text(-res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(decathlon[,13]==catNames[1],'black','red'))
+abline(h=0, lty=2)
+abline(v=0, lty=2)
+legend("topleft", c('Decastar', 'OlympicG'), text.col=c("black","red"), cex=0.75)
+
 #Qualitative supplementary variables
 #....
 #To see whether the categories of the supplementary variable are significantly different from each other, we can draw confidence ellipses around them.
@@ -285,24 +307,6 @@ plot.PCA(res.PCA, habillage=13, ellipse=ellipse.coord, cex=0.8, axes=c(1,3))
 #However, there is no difference between the points "Decastar" and "Olympic Games" for the second axis. This means that the athletes have 
 #improved their performance but did not change profile (except for Zsivoczky who went from slow and strong during the Decastar to fast and 
 #weak during the Olympic Games).
-
-#Color individuals according to the categories' center of gravity
-# plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
-#FactoMineR
-data(decathlon)
-par(mfrow = c(1,2))
-res.PCA <- PCA(decathlon, scale.unit=T, ncp=5, quanti.sup=c(11:12), quali.sup=13, graph=T)
-par(mfrow = c(1,1))
-plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T)
-
-#princomp
-res.pca <- princomp(decathlon[,1:10], cor=T)
-plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(decathlon[,13]==catNames[1],'black','red'))
-catNames <- names(table(decathlon[,13]))
-text(-res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(decathlon[,13]==catNames[1],'black','red'))
-abline(h=0, lty=2)
-abline(v=0, lty=2)
-legend("topleft", c('Decastar', 'OlympicG'), text.col=c("black","red"), cex=0.75)
 
 ###################################################################
 
@@ -411,7 +415,8 @@ plot(decathlon$Points, -res.pca$scores[,1])
 abline(lm(-res.pca$scores[,1]~decathlon$Points))
 
 pca.coord <- -res.pca$scores[,1:5]
-pca.coord[,1:2] <- -s.label[,1:2]
+pca.coord[,2] <- -pca.coord[,2]
 s.label(pca.coord, clab=0.5)
 s.arrow(2*pca.var.coord, add.p=T)
 
+###################################################################
