@@ -6,17 +6,25 @@
 # http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
 
 ## Installing and initializing
-install.packages('ade4')
-library(ade4)
-install.packages('FactoMineR')
-library(FactoMineR)
+#princomp (ade4) package
+if('ade4' %in% rownames(installed.packages()) == FALSE) {
+  install.packages('ade4')
+  library(ade4)
+}
+#FactoMineR package
+if('FactoMineR' %in% rownames(installed.packages()) == FALSE) {
+  install.packages('FactoMineR')
+  library(FactoMineR)
+}
 
 ## Loading data
 data(olympic)
 data(decathlon)
 
-pcaSelect <- function(method) {
-    
+pcaSelect <- function(method, file='output.pdf') {
+  
+  pdf(file)
+  
   if (method=='princomp') {
     ###################################################################
     ###################################################################
@@ -471,5 +479,9 @@ pcaSelect <- function(method) {
     s.label(res.PCA$ind$coord, clab=0.5)
     s.arrow(2*res.PCA$var$coord, add.p=T)
     ###################################################################
+    
   }
+  
+  graphics.off()
+  print(paste0('output saved in ', getwd(), '/', file))
 }
