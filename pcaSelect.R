@@ -19,8 +19,16 @@ if('FactoMineR' %in% rownames(installed.packages()) == FALSE) {
 
 ## Loading data
 data(olympic)
+### Name: olympic
+### Title: Olympic Decathlon
+### Aliases: olympic
+### Keywords: datasets
 data(decathlon)
-
+### Name: decathlon
+### Title: Decathlon Data (Olympic and non-olympic)
+### Aliases: decathlon
+### Keywords: datasets
+  
 pcaSelect <- function(method, file='output.pdf') {
   
   pdf(file)
@@ -40,7 +48,7 @@ pcaSelect <- function(method, file='output.pdf') {
     pca.olympic_nc <- princomp(olympic$tab)     #no correlation selected (nc)
     pca.olympic <- princomp(olympic$tab, cor=T)
     #Biplot gives a graphical summary of both 1) cases (athletes) in terms of scores and 2) the variables in terms of loadings
-    biplot(pca.olympic, main="princomp Results")
+    biplot(pca.olympic, main="PCA Factor Map (princomp)")
     text(pca.olympic$scores[,1], pca.olympic$scores[,2], labels=rep("X", nrow(olympic$tab)), cex= 0.7)
     # biplot(pca.olympic, pch=5, main="princomp Results", xlabs=rep("X", nrow(olympic$tab))
     abline(h=0, lty=2)
@@ -69,20 +77,30 @@ pcaSelect <- function(method, file='output.pdf') {
     plot(pca.olympic, type='l')
     
     par(mfrow=c(1,1))
-    plot(-pca.olympic$scores[,1], pca.olympic$scores[,2], col='red', pch=0)
+    plot(-pca.olympic$scores[,1], pca.olympic$scores[,2], col='red', pch=0, ylab="Dim 2", xlab="Dim 1", main='Individual factor map (PCA)\n(princomp)')
     legend("topright", c('princomp'), pch=c(0), col=c("red"), cex=0.75, bty='n')
+    text(-pca.olympic$scores[,1], pca.olympic$scores[,2], labels=rownames(pca.olympic$scores), pos=4)
+    abline(h=0, lty=2)
+    abline(v=0, lty=2)
     ###################################################################
     
     ###################################################################
     ## Compare Plots (extended - examples)
     # biplot(pca.olympic)
     # data.frame(olympic$tab[, '1500'], pca.olympic$scores[,1])
-    par(mfrow=c(1,3))
+    layout(matrix(c(1,1,1,2,3,4), 2, 3, byrow=T), widths=c(1,1), heights=c(0.05,1))
+    par(mar=c(0,0,0,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
+    
+    par(mar=c(5,4,0.1,2))
     plot(olympic$tab[, '1500'], pca.olympic$scores[,1], pch=23, bg='red', cex=2, xlab='1500', ylab='pca score')
     plot(olympic$tab[, 'jave'], pca.olympic$scores[,2], pch=23, bg='red', cex=2, xlab='javelin', ylab='pca score')
     #Overall score
     plot(pca.olympic$scores[,1], olympic$score, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='pca score')
     #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
+    
+    par(mar=c(5,4,4,2))
     ###################################################################
     
     ###################################################################
@@ -107,7 +125,12 @@ pcaSelect <- function(method, file='output.pdf') {
     names(impNums)  
     
     #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
-    par(mfrow=c(2,2))
+    layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+    par(mar=c(0.5,0,0.5,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Variables linked to PC1 (princomp)'),font=2, cex=1.25)
+    
+    par(mar=c(5,4,0.1,2))
     olympic_p <- olympic$tab
     
     var1 <- names(impNums)[1]
@@ -124,6 +147,8 @@ pcaSelect <- function(method, file='output.pdf') {
     # plot(olympic_p[,c('400')], -pca.olympic$scores[,1], xlab='400', ylab='score')
     abData <- data.frame(cbind(olympic$score, pca.olympic$scores[,1]))
     abline(lm(abData$X1~(abData$X2)))
+    
+    par(mar=c(5,4,4,2))
     
     ###########VARIABLES BASED ON STRENGTH###################
     #The second axis opposes athletes who are strong (variables "Discus" and "Shot.put") between those who are not. 
@@ -149,12 +174,17 @@ pcaSelect <- function(method, file='output.pdf') {
     
     #Overall score
     par(mfrow=c(1,1))
-    plot(pca.olympic$scores[,2], olympic$score, xlab='Comp. 2', ylab='pca score')
+    plot(pca.olympic$scores[,2], olympic$score, xlab='Comp. 2', ylab='pca score', main='PC2 vs. PCA score (princomp)')
     abData <- data.frame(cbind(olympic$score, pca.olympic$scores[,2]))
     abline(lm(abData$X1~(abData$X2)))
     
     #princomp
-    par(mfrow=c(2,2))
+    layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+    par(mar=c(0.5,0,0.5,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Variables linked to PC2 (princomp)'),font=2, cex=1.25)
+    
+    par(mar=c(5,4,0.1,2))
     olympic_p <- olympic$tab
     
     var1 <- names(impNums)[1]    #Discus 
@@ -170,6 +200,8 @@ pcaSelect <- function(method, file='output.pdf') {
     plot(olympic_p[,var4], pca.olympic$scores[,2], xlab=var4, ylab='score')
     abline(lm(pca.olympic$scores[,2]~olympic_p[,var4]))
     
+    par(mar=c(5,4,4,2))
+    
     #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
     #slow athletes (like Casarsa), fast but weak athletes (like Warners) and slow and weak (relatively speaking!) athletes (like Lorenzo).
     ###################################################################
@@ -183,7 +215,8 @@ pcaSelect <- function(method, file='output.pdf') {
     par(mfrow=c(1,1))
     res.pca <- princomp(decathlon[,1:10], cor=T)
     catNames <- names(table(decathlon[,13]))
-    plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(decathlon[,13]==catNames[1],'black','red'))
+    plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(decathlon[,13]==catNames[1],'black','red'),
+         main='Individual factor map (PCA)\n(princomp)', xlab='Dim 1', ylab='Dim 2')
     text(-res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(decathlon[,13]==catNames[1],'black','red'))
     abline(h=0, lty=2)
     abline(v=0, lty=2)
@@ -232,13 +265,14 @@ pcaSelect <- function(method, file='output.pdf') {
     ## Combined summary plots
     #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
     par(mfrow=c(2,2))
-    pc.bp <- plot(res.pca)
+    pc.bp <- plot(res.pca, main="")
     
     pca.var.coord <- res.pca$loadings[,1:5]
     pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
     s.corcircle(pca.var.coord)
     
-    plot(decathlon$Points, -res.pca$scores[,1])
+    plot(decathlon$Points, -res.pca$scores[,1],
+         xlab='Points', ylab='PCA score')
     abline(lm(-res.pca$scores[,1]~decathlon$Points))
     
     pca.coord <- -res.pca$scores[,1:5]
@@ -255,7 +289,7 @@ pcaSelect <- function(method, file='output.pdf') {
     ###################################################################
     ###################################################################
     
-    ###################################################################
+    ########################################################$###########
     ## Compare initial plots
     par(mfrow=c(1,2))
     PCA.olympic <- PCA(olympic$tab, scale.unit=T, ncp=5, graph=T)
@@ -274,8 +308,9 @@ pcaSelect <- function(method, file='output.pdf') {
     ###################################################################
     ## Compare plots
     par(mfrow=c(1,2))
-    PCA.bp <- barplot(PCA.olympic$eig[,1], main="PCA.olympic")
-    plot(x=PCA.bp, y=PCA.olympic$eig[,1], main="PCA.olympic")
+    PCA.bp <- barplot(PCA.olympic$eig[,1], main="PCA.olympic", xlab='', names.arg=rownames(PCA.olympic$eig), ylab='Variances')
+    plot(x=PCA.bp, y=PCA.olympic$eig[,1], main="PCA.olympic", xlab='', xaxt='n', ylab='Variances')
+    axis(1, at=PCA.bp, labels=rownames(PCA.olympic$eig), las=2)
     lines(x=PCA.bp, y=PCA.olympic$eig[,1], type='l')
     
     par(mfrow=c(1,1))
@@ -287,12 +322,19 @@ pcaSelect <- function(method, file='output.pdf') {
     ## Compare Plots (extended - examples)
     # biplot(pca.olympic)
     # data.frame(olympic$tab[, '1500'], pca.olympic$scores[,1])
-    par(mfrow=c(1,3))
+    layout(matrix(c(1,1,1,2,3,4), 2, 3, byrow=T), widths=c(1,1), heights=c(0.05,1))
+    par(mar=c(0,0,0,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
+    
+    par(mar=c(5,4,0.1,2))
     plot(olympic$tab[, '1500'], -PCA.olympic$ind$coord[,1], pch=23, bg='red', cex=2, xlab='1500', ylab='PCA score')
     plot(olympic$tab[, 'jave'], PCA.olympic$ind$coord[,2], pch=23, bg='red', cex=2, xlab='javelin', ylab='PCA score')
     #Overall score
     plot(-PCA.olympic$ind$coord[,1], olympic$score, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
     #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
+    
+    par(mar=c(5,4,4,2))
     ###################################################################
    
     ###################################################################
@@ -312,9 +354,13 @@ pcaSelect <- function(method, file='output.pdf') {
     names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
     
     #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
-    par(mfrow=c(2,2))
-    olympic_p <- olympic$tab
+    layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+    par(mar=c(0.5,0,0.5,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
     
+    par(mar=c(5,4,0.1,2))
+    olympic_p <- olympic$tab
     var1 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][1]
     plot(olympic_p[,var1], PCA.olympic$ind$coord[,1], xlab=var1, ylab='score')
     abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,var1]))
@@ -330,6 +376,8 @@ pcaSelect <- function(method, file='output.pdf') {
     abline(lm(abData$X1~(abData$X2)))
     # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
     # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
+    
+    par(mar=c(5,4,4,2))
     
     ###########VARIABLES BASED ON STRENGTH###################
     #The second axis opposes athletes who are strong (variables "Discus" and "Shot.put") between those who are not. 
@@ -348,11 +396,16 @@ pcaSelect <- function(method, file='output.pdf') {
     
     #Overall score
     par(mfrow=c(1,1))
-    plot(PCA.olympic$ind$coord[,2], olympic$score, xlab='Comp. 2', ylab='PCA score')
+    plot(PCA.olympic$ind$coord[,2], olympic$score, xlab='Comp. 2', ylab='PCA score', main='PC2 vs. PCA score (princomp)')
     abData <- data.frame(cbind(olympic$score, PCA.olympic$ind$coord[,2]))
     abline(lm(abData$X1~(abData$X2)))
     
-    par(mfrow=c(2,2))
+    layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+    par(mar=c(0.5,0,0.5,0))
+    plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+    text(1,0,sprintf('Variables linked to PC2 (FactoMineR)'),font=2, cex=1.25)
+    
+    par(mar=c(5,4,0.1,2))
     olympic_p <- olympic$tab
     
     var1 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][1]     #Discus
@@ -367,6 +420,8 @@ pcaSelect <- function(method, file='output.pdf') {
     var4 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][4]
     plot(olympic_p[,var4], PCA.olympic$ind$coord[,2], xlab=var4, ylab='score')
     abline(lm(PCA.olympic$ind$coord[,2]~olympic_p[,var4]))
+    
+    par(mar=c(5,4,4,2))
     
     #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
     #slow athletes (like Casarsa), fast but weak athletes (like Warners) and slow and weak (relatively speaking!) athletes (like Lorenzo).
@@ -467,13 +522,15 @@ pcaSelect <- function(method, file='output.pdf') {
     ## Combined summary plots
     #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
     par(mfrow=c(2,2))
-    pc.bp <- barplot(res.PCA$eig[,1])
+    pc.bp <- barplot(res.PCA$eig[,1], ylab='Variances')
+    axis(1, at=pc.bp, labels=rownames(res.PCA$eig), las=2)
     lines(x=pc.bp, y=res.PCA$eig[,1])
     points(x=pc.bp, y=res.PCA$eig[,1])
     
     s.corcircle(res.PCA$var)
     
-    plot(decathlon$Points, res.PCA$ind$coord[,1])
+    plot(decathlon$Points, res.PCA$ind$coord[,1],
+         xlab="Points", ylab="PCA scores")
     abline(lm(res.PCA$ind$coord[,1]~decathlon$Points))
     
     s.label(res.PCA$ind$coord, clab=0.5)
