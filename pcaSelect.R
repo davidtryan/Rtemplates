@@ -29,17 +29,18 @@ data(decathlon)
 ### Aliases: decathlon
 ### Keywords: datasets
   
-pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=YES) {
+pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
   
   pdf(file)
   
-  if (example==YES) {
+  if (example=='YES') {
     data <- olympic$tab
     data_scores <- olympic$score
-    data_d <- data(decathlon)
+    data_d <- decathlon
   } else {
-    data <- dataFrame
+    data <- varData
     data_scores <- resultData
+    data_d <- decathlon
   }  
   
   if (method=='princomp') {
@@ -103,8 +104,8 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
     
     par(mar=c(5,4,0.1,2))
-    plot(data[, '1500'], pca$scores[,1], pch=23, bg='red', cex=2, xlab='1500', ylab='pca score')
-    plot(data[, 'jave'], pca$scores[,2], pch=23, bg='red', cex=2, xlab='javelin', ylab='pca score')
+    plot(data[,floor(ncol(data)/2)], pca$scores[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='pca score')
+    plot(data[,ncol(data)], pca$scores[,2], pch=23, bg='red', cex=2, xlab=colnames(data)[ncol(data)], ylab='pca score')
     #Overall score
     plot(pca$scores[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='pca score')
     #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
@@ -155,7 +156,7 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     plot(pca$scores[,1], data_scores, xlab='Comp. 1', ylab='pca score')
     # plot(olympic_p[,c('400')], -pca.olympic$scores[,1], xlab='400', ylab='score')
     abData <- data.frame(cbind(data_scores, pca$scores[,1]))
-    abline(lm(abData$X1~(abData$X2)))
+    abline(lm(abData[,1]~(abData[,2])))
     
     par(mar=c(5,4,4,2))
     
@@ -185,7 +186,7 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     par(mfrow=c(1,1))
     plot(pca$scores[,2], data_scores, xlab='Comp. 2', ylab='pca score', main='PC2 vs. PCA score (princomp)')
     abData <- data.frame(cbind(data_scores, pca$scores[,2]))
-    abline(lm(abData$X1~(abData$X2)))
+    abline(lm(abData[,1]~(abData[,2])))
     
     #princomp
     layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
@@ -337,8 +338,8 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
     
     par(mar=c(5,4,0.1,2))
-    plot(data[, '1500'], -PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab='1500', ylab='PCA score')
-    plot(data[, 'jave'], PCA$ind$coord[,2], pch=23, bg='red', cex=2, xlab='javelin', ylab='PCA score')
+    plot(data[,floor(ncol(data)/2)], -PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='PCA score')
+    plot(data[,ncol(data)], PCA$ind$coord[,2], pch=23, bg='red', cex=2, xlab=colnames(data)[ncol(data)], ylab='PCA score')
     #Overall score
     plot(-PCA$ind$coord[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
     #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
@@ -382,7 +383,7 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     #Overall score
     plot(-PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
     abData <- data.frame(cbind(data_scores, -PCA$ind$coord[,1]))
-    abline(lm(abData$X1~(abData$X2)))
+    abline(lm(abData[,1]~(abData[,2])))
     # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
     # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
     
@@ -407,7 +408,7 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     par(mfrow=c(1,1))
     plot(PCA$ind$coord[,2], data_scores, xlab='Comp. 2', ylab='PCA score', main='PC2 vs. PCA score (princomp)')
     abData <- data.frame(cbind(data_scores, PCA$ind$coord[,2]))
-    abline(lm(abData$X1~(abData$X2)))
+    abline(lm(abData[,1]~(abData[,2])))
     
     layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
     par(mar=c(0.5,0,0.5,0))
@@ -458,7 +459,6 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     #Color individuals according to the categories' center of gravity
     # plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
     #FactoMineR
-    data(data_d)
     par(mfrow = c(1,2))
     res.PCA <- PCA(data_d, scale.unit=T, ncp=5, quanti.sup=c(11:12), quali.sup=13, graph=T)
     par(mfrow = c(1,1))
@@ -485,8 +485,8 @@ pcaSelect <- function(method, file='output.pdf', dataFrame, resultData, example=
     #the smoothing method (Smooth) are implemented.
     
     ##ONLY WITH FACTOMINER
-    estim_ncp(olympic_p, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
-    estim_ncp(olympic_p, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
+    estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
+    estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
     ###################################################################
     
     ###################################################################
