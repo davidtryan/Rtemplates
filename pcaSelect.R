@@ -5,24 +5,33 @@
 # http://www.inside-r.org/packages/cran/FactoMineR/docs/plot.PCA
 # http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
 
+###PCA Principles###
+# The major goal of principal components analysis is to reveal hidden structure in a data set.  In so doing, we may be able to 
+# 1) identify how different variables work together to create the dynamics of the system
+# 2) reduce the dimensionality of the data
+# 3) decrease redundancy in the data
+# 4) filter some of the noise in the data
+# 5) compress the data
+# 6) prepare the data for further analysis using other techniques
+
 ## Installing and initializing
 #princomp (ade4) package
 if('ade4' %in% rownames(installed.packages()) == FALSE) {
   install.packages('ade4')
-  library(ade4)
 }
 #FactoMineR package
 if('FactoMineR' %in% rownames(installed.packages()) == FALSE) {
   install.packages('FactoMineR')
-  library(FactoMineR)
 }
 
 ## Loading data
+library(ade4)
 data(olympic)
 ### Name: olympic
 ### Title: Olympic Decathlon
 ### Aliases: olympic
 ### Keywords: datasets
+library(FactoMineR)
 data(decathlon)
 ### Name: decathlon
 ### Title: Decathlon Data (Olympic and non-olympic)
@@ -120,7 +129,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     
     #Variables linked to first principal component
     impList <- sort(pca$loadings[,1])
-    maxInd <- which(impList==max(abs(impList)))
+    maxInd <- which(abs(impList)==max(abs(impList)))
     maxIndList <- c(maxInd)
     swp <- 0
     while (swp==0 && length(maxIndList)<4) {
@@ -129,11 +138,12 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
       if (maxInd_t!=(maxInd-1)) {
         swp=1
       }
+      maxInd <- maxInd_t
       maxIndList <- c(maxIndList, maxInd_t)
     }
     impNums <- impList[maxIndList]
     names(impNums)  
-    
+
     #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
     layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
     par(mar=c(0.5,0,0.5,0))
@@ -143,21 +153,29 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     par(mar=c(5,4,0.1,2))
 #     olympic_p <- data
     
-    var1 <- names(impNums)[1]
-    plot(data[,var1], -pca$scores[,1], xlab=var1, ylab='score')
-    abline(lm(-pca$scores[,1]~data[,var1]))
-    var2 <- names(impNums)[2]
-    plot(data[,var2], -pca$scores[,1], xlab=var2, ylab='score')
-    abline(lm(-pca$scores[,1]~data[,var2]))
-    var3 <- names(impNums)[3]
-    plot(data[,var3], -pca$scores[,1], xlab=var3, ylab='score')
-    abline(lm(-pca$scores[,1]~data[,var3]))
+    counter <- 0
+    for (i in 1:length(impNums)) {
+      counter <- counter+1
+      if (counter>4) {
+        layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+        par(mar=c(0.5,0,0.5,0))
+        plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        par(mar=c(5,4,0.1,2))
+        counter <- 0
+      }
+      var <- names(impNums)[i]
+      plot(data[,var], -pca$scores[,1], xlab=var, ylab='score')
+      abline(lm(-pca$scores[,1]~data[,var]))
+    }
+
     #Overall score
     plot(pca$scores[,1], data_scores, xlab='Comp. 1', ylab='pca score')
     # plot(olympic_p[,c('400')], -pca.olympic$scores[,1], xlab='400', ylab='score')
     abData <- data.frame(cbind(data_scores, pca$scores[,1]))
     abline(lm(abData[,1]~(abData[,2])))
     
+    layout(matrix(c(1,1)))
     par(mar=c(5,4,4,2))
     
     ###########VARIABLES BASED ON STRENGTH###################
@@ -167,7 +185,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     
     #Variables linked to second principal component
     impList <- sort(pca$loadings[,2])
-    maxInd <- which(impList==max(abs(impList)))
+    maxInd <- which(abs(impList)==max(abs(impList)))
     maxIndList <- c(maxInd)
     swp <- 0
     while (swp==0 && length(maxIndList)<4) {
@@ -197,19 +215,23 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     par(mar=c(5,4,0.1,2))
 #     olympic_p <- data
     
-    var1 <- names(impNums)[1]    #Discus 
-    plot(data[,var1], pca$scores[,2], xlab=var1, ylab='score')
-    abline(lm(pca$scores[,2]~data[,var1]))
-    var2 <- names(impNums)[2]     #Shotput
-    plot(data[,var2], pca$scores[,2], xlab=var2, ylab='score')
-    abline(lm(pca$scores[,2]~data[,var2]))
-    var3 <- names(impNums)[3]
-    plot(data[,var3], pca$scores[,2], xlab=var3, ylab='score')
-    abline(lm(pca$scores[,2]~data[,var3]))
-    var4 <- names(impNums)[4]
-    plot(data[,var4], pca$scores[,2], xlab=var4, ylab='score')
-    abline(lm(pca$scores[,2]~data[,var4]))
+    counter <- 0
+    for (i in 1:length(impNums)) {
+      counter <- counter+1
+      if (counter>4) {
+        layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+        par(mar=c(0.5,0,0.5,0))
+        plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        par(mar=c(5,4,0.1,2))
+        counter <- 0
+      }
+      var <- names(impNums)[i]
+      plot(data[,var], -pca$scores[,2], xlab=var, ylab='score')
+      abline(lm(-pca$scores[,2]~data[,var]))
+    }
     
+    layout(matrix(c(1,1)))
     par(mar=c(5,4,4,2))
     
     #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
@@ -255,7 +277,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     ## Ranking variable contribution for combined first two PCs
     impList <- res.pca$loadings[,1:2]
     impList <- sort(abs(impList[,1])+abs(impList[,2]))
-    maxInd <- which(impList==max(abs(impList)))
+    maxInd <- which(abs(impList)==max(abs(impList)))
     maxIndList <- c(maxInd)
     swp <- 0
     while (swp==0 && length(maxIndList)<4) {
@@ -361,7 +383,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     #variables which are significantly correlated to the principal dimensions. 
     #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
     charCat <- dimdesc(PCA, axes=c(1,2))$Dim.1$quanti
-    names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
+    impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
     
     #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
     layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
@@ -371,15 +393,22 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     
     par(mar=c(5,4,0.1,2))
 #     olympic_p <- data
-    var1 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][1]
-    plot(data[,var1], PCA$ind$coord[,1], xlab=var1, ylab='score')
-    abline(lm(PCA$ind$coord[,1]~data[,var1]))
-    var2 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][2]
-    plot(data[,var2], PCA$ind$coord[,1], xlab=var2, ylab='score')
-    abline(lm(PCA$ind$coord[,1]~data[,var2]))
-    var3 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][3]
-    plot(data[,var3], PCA$ind$coord[,1], xlab=var3, ylab='score')
-    abline(lm(PCA$ind$coord[,1]~data[,var3]))
+
+    counter <- 0
+    for (i in 1:length(impCat)) {
+      counter <- counter+1
+      if (counter>4) {
+        layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+        par(mar=c(0.5,0,0.5,0))
+        plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        par(mar=c(5,4,0.1,2))
+        counter <- 0
+      }
+      var <- impCat[i]
+      plot(data[,var], -PCA$ind$coord[,1], xlab=var, ylab='score')
+      abline(lm(-PCA$ind$coord[,1]~data[,var]))
+    }
     #Overall score
     plot(-PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
     abData <- data.frame(cbind(data_scores, -PCA$ind$coord[,1]))
@@ -387,6 +416,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
     # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
     
+    layout(matrix(c(1,1)))    
     par(mar=c(5,4,4,2))
     
     ###########VARIABLES BASED ON STRENGTH###################
@@ -402,7 +432,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     #variables which are significantly correlated to the principal dimensions. 
     #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
     charCat <- dimdesc(PCA, axes=c(1,2))$Dim.2$quanti
-    names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
+    impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
     
     #Overall score
     par(mfrow=c(1,1))
@@ -418,19 +448,23 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example) {
     par(mar=c(5,4,0.1,2))
 #     olympic_p <- data
     
-    var1 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][1]     #Discus
-    plot(data[,var1], PCA$ind$coord[,2], xlab=var1, ylab='score')
-    abline(lm(PCA$ind$coord[,2]~data[,var1]))
-    var2 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][2]       #Shot put
-    plot(data[,var2], PCA$ind$coord[,2], xlab=var2, ylab='score')
-    abline(lm(PCA$ind$coord[,2]~data[,var2]))
-    var3 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][3]  
-    plot(data[,var3], PCA$ind$coord[,2], xlab=var3, ylab='score')
-    abline(lm(PCA$ind$coord[,2]~data[,var3]))
-    var4 <- rownames(PCA_contrb2)[1:length(PCA_contrb2)][4]
-    plot(data[,var4], PCA$ind$coord[,2], xlab=var4, ylab='score')
-    abline(lm(PCA$ind$coord[,2]~data[,var4]))
+    counter <- 0
+    for (i in 1:length(impCat)) {
+      counter <- counter+1
+      if (counter>4) {
+        layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+        par(mar=c(0.5,0,0.5,0))
+        plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        par(mar=c(5,4,0.1,2))
+        counter <- 0
+      }
+      var <- impCat[i]
+      plot(data[,var], -PCA$ind$coord[,2], xlab=var, ylab='score')
+      abline(lm(-PCA$ind$coord[,2]~data[,var]))
+    }
     
+    layout(matrix(c(1,1)))    
     par(mar=c(5,4,4,2))
     
     #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
