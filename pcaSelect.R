@@ -37,6 +37,11 @@ data(decathlon)
 ### Title: Decathlon Data (Olympic and non-olympic)
 ### Aliases: decathlon
 ### Keywords: datasets
+
+#test:
+#varData <- mtcars[,3:11]
+#resultData <- mtcars[,1]
+#suppData <- ifelse(mtcars[,2]>=6,'hi','lo')
   
 pcaSelect <- function(method, file='output.pdf', varData, resultData, example, ..) {
   
@@ -47,7 +52,8 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     data_scores <- olympic$score
     suppData <- decathlon
     suppDataScores <- decathlon$Points
-    data_d <- decathlon
+#     data_d <- decathlon
+    print('Running Olympic and Decathlon Data Example')
   } else {
     data <- varData
     data_scores <- resultData
@@ -55,7 +61,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       suppData <- cbind(data, suppData)
       suppDataScores <- data_scores  
     }
-    data_d <- decathlon
+#     data_d <- decathlon
   }  
   
   if (method=='princomp') {
@@ -102,9 +108,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     plot(pca, type='l')
     
     par(mfrow=c(1,1))
-    plot(-pca$scores[,1], pca$scores[,2], col='red', pch=0, ylab="Dim 2", xlab="Dim 1", main='Individual factor map (PCA)\n(princomp)')
+    plot(pca$scores[,1], pca$scores[,2], col='red', pch=0, ylab="Dim 2", xlab="Dim 1", main='Individual factor map (PCA)\n(princomp)')
     legend("topright", c('princomp'), pch=c(0), col=c("red"), cex=0.75, bty='n')
-    text(-pca$scores[,1], pca$scores[,2], labels=rownames(pca$scores), pos=4)
+    text(pca$scores[,1], pca$scores[,2], labels=rownames(pca$scores), pos=4)
     abline(h=0, lty=2)
     abline(v=0, lty=2)
     ###################################################################
@@ -166,13 +172,13 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
         layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
         par(mar=c(0.5,0,0.5,0))
         plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        text(1,0,sprintf('Variables linked to PC1 (princomp)'),font=2, cex=1.25)
         par(mar=c(5,4,0.1,2))
         counter <- 0
       }
       var <- names(impNums)[i]
-      plot(data[,var], -pca$scores[,1], xlab=var, ylab='score')
-      abline(lm(-pca$scores[,1]~data[,var]))
+      plot(data[,var], pca$scores[,1], xlab=var, ylab='score')
+      abline(lm(pca$scores[,1]~data[,var]))
     }
 
     #Overall score
@@ -228,13 +234,13 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
         layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
         par(mar=c(0.5,0,0.5,0))
         plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-        text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+        text(1,0,sprintf('Variables linked to PC1 (princomp)'),font=2, cex=1.25)
         par(mar=c(5,4,0.1,2))
         counter <- 0
       }
       var <- names(impNums)[i]
-      plot(data[,var], -pca$scores[,2], xlab=var, ylab='score')
-      abline(lm(-pca$scores[,2]~data[,var]))
+      plot(data[,var], pca$scores[,2], xlab=var, ylab='score')
+      abline(lm(pca$scores[,2]~data[,var]))
     }
     
     layout(matrix(c(1,1)))
@@ -246,21 +252,26 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     
     ###################################################################
     ############## Supplementary variables #############
-    data_comb <- cbind(data, data_scores, rank(-data_scores))
-    colnames(data_comb) <- c(colnames(data), 'score', 'rank')
     
     if (exists("suppData") || example=='YES') {
+      if (example=="YES") {
+        data_comb <- suppData[,1:12]
+      } else {
+        data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+        colnames(data_comb) <- c(colnames(data), 'score', 'rank')        
+      }
+      
       #Color individuals according to the categories' center of gravity
       par(mfrow=c(1,1))
         
-      res.pca <- princomp(suppData[,-(ncol(suppData))], cor=T)
+      res.pca <- princomp(data_comb, cor=T)
       catNames <- names(table(suppData[,ncol(suppData)]))
-      plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(data_d[,13]==catNames[1],'black','red'),
+      plot(res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'),
            main='Individual factor map (PCA)\n(princomp)', xlab='Dim 1', ylab='Dim 2')
-      text(-res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(data_d[,13]==catNames[1],'black','red'))
+      text(res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'))
       abline(h=0, lty=2)
       abline(v=0, lty=2)
-      legend("topleft", c('Decastar', 'OlympicG'), text.col=c("black","red"), cex=0.75)
+      legend("topleft", catNames, text.col=c("black","red"), cex=0.75)
       
       #Qualitative supplementary variables
       #....
@@ -306,20 +317,23 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       pc.bp <- plot(res.pca, main="")
       
       pca.var.coord <- res.pca$loadings[,1:5]
-      pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
+#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
       s.corcircle(pca.var.coord)
       
-      plot(suppDataScores, -res.pca$scores[,1],
+      plot(suppDataScores, res.pca$scores[,1],
            xlab='Points', ylab='PCA score')
-      abline(lm(-res.pca$scores[,1]~suppDataScores))
+      abline(lm(res.pca$scores[,1]~suppDataScores))
       
-      pca.coord <- -res.pca$scores[,1:5]
-      pca.coord[,2] <- -pca.coord[,2]
+      pca.coord <- res.pca$scores[,1:5]
+#       pca.coord[,2] <- -pca.coord[,2]
       s.label(pca.coord, clab=0.5)
       s.arrow(2*pca.var.coord, add.p=T) 
       ###################################################################
     
     } else {
+      data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+      colnames(data_comb) <- c(colnames(data), 'score', 'rank')
+      
       ###################################################################
       #Graphing variables
       par(mfrow=c(1,1))
@@ -355,15 +369,15 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       pc.bp <- plot(pca, main="")
       
       pca.var.coord <- pca$loadings[,1:5]
-      pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
+#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
       s.corcircle(pca.var.coord)
       
-      plot(data_comb$score, -pca$scores[,1],
+      plot(data_scores, pca$scores[,1],
            xlab='points/score', ylab='PCA score')
-      abline(lm(-pca$scores[,1]~data_comb$score))
+      abline(lm(pca$scores[,1]~data_scores))
       
-      pca.coord <- -pca$scores[,1:5]
-      pca.coord[,2] <- -pca.coord[,2]
+      pca.coord <- pca$scores[,1:5]
+#       pca.coord[,2] <- -pca.coord[,2]
       s.label(pca.coord, clab=0.5)
       s.arrow(2*pca.var.coord, add.p=T) 
       ###################################################################
@@ -418,10 +432,10 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
     
     par(mar=c(5,4,0.1,2))
-    plot(data[,floor(ncol(data)/2)], -PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='PCA score')
+    plot(data[,floor(ncol(data)/2)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='PCA score')
     plot(data[,ncol(data)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[ncol(data)], ylab='PCA score')
     #Overall score
-    plot(-PCA$ind$coord[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
+    plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
     #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
     
     par(mar=c(5,4,4,2))
@@ -464,12 +478,12 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
         counter <- 0
       }
       var <- impCat[i]
-      plot(data[,var], -PCA$ind$coord[,1], xlab=var, ylab='score')
-      abline(lm(-PCA$ind$coord[,1]~data[,var]))
+      plot(data[,var], PCA$ind$coord[,1], xlab=var, ylab='score')
+      abline(lm(PCA$ind$coord[,1]~data[,var]))
     }
     #Overall score
-    plot(-PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
-    abData <- data.frame(cbind(data_scores, -PCA$ind$coord[,1]))
+    plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
+    abData <- data.frame(cbind(data_scores, PCA$ind$coord[,1]))
     abline(lm(abData[,1]~(abData[,2])))
     # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
     # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
@@ -518,8 +532,8 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
         counter <- 0
       }
       var <- impCat[i]
-      plot(data[,var], -PCA$ind$coord[,2], xlab=var, ylab='score')
-      abline(lm(-PCA$ind$coord[,2]~data[,var]))
+      plot(data[,var], PCA$ind$coord[,2], xlab=var, ylab='score')
+      abline(lm(PCA$ind$coord[,2]~data[,var]))
     }
     
     layout(matrix(c(1,1)))    
@@ -533,15 +547,20 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     ###################################################################
     ############## Supplementary variables #############
     #FactoMineR ONLY!!!!
-    data_comb <- cbind(data, data_scores, rank(-data_scores))
-    colnames(data_comb) <- c(colnames(data), 'score', 'rank')
-    
-    if (exists("suppData")|| example=='YES') {
+
+    if (exists("suppData") || example=='YES') {
+      if (example=="YES") {
+        data_comb <- suppData[,1:12]
+      } else {
+        data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+        colnames(data_comb) <- c(colnames(data), 'score', 'rank')        
+      }
         
       #Adding supplementary continuous variables (Rank and Score)
       par(mfrow=c(1,2))
-      PCA_supp <- PCA(data_comb[,1:12], scale.unit=T, ncp=5,
-                              quanti.sup=c(11,12), graph=T)
+      PCA_supp <- PCA(data_comb, scale.unit=T, ncp=5,
+                              quanti.sup=c(ncol(data_comb)-1,ncol(data_comb)), graph=T)
+      
       #Winners are those who score the most and therefore have the lowest rank
       PCA_contrb2 <- data.frame(PCA_supp$var$contrib)
       PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
@@ -555,16 +574,17 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       # plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
       #FactoMineR
       par(mfrow = c(1,2))
-      res.PCA <- PCA(data_d, scale.unit=T, ncp=5, quanti.sup=c(11:12), quali.sup=13, graph=T)
+      suppData_comb <- cbind(data_comb,suppData[,ncol(suppData)])
+      res.PCA <- PCA(suppData_comb, scale.unit=T, ncp=5, quanti.sup=c(ncol(suppData_comb)-2,ncol(suppData_comb)-1), quali.sup=ncol(suppData_comb), graph=T)
       par(mfrow = c(1,1))
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T)
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T)
         
       #Qualitative supplementary variables
       #....
       #To see whether the categories of the supplementary variable are significantly different from each other, we can draw confidence ellipses around them.
-      concat <- cbind.data.frame(data_d[,13], res.PCA$ind$coord)
+      concat <- cbind.data.frame(suppData_comb[,ncol(suppData_comb)], res.PCA$ind$coord)
       ellipse.coord <- coord.ellipse(concat, bary=T)
-      plot.PCA(res.PCA, habillage=13, ellipse=ellipse.coord, cex=0.8, axes=c(1,3))
+      plot.PCA(res.PCA, habillage=ncol(suppData_comb), ellipse=ellipse.coord, cex=0.8, axes=c(1,3))
       #When looking at the points representing "Decastar" and "Olympic Games", we notice that this last one has higher coordinates on the 
       #first axis than the first one. This shows an evolution in the performances of the athletes. All the athletes who participated to the two 
       #competitions have then slightly better results for the Olympic Games. 
@@ -582,6 +602,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       ##ONLY WITH FACTOMINER
       estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
       estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
+      
+      estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
+      estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
       ###################################################################
       
       ###################################################################
@@ -589,14 +612,14 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       #CAN ONLY BE DONE WITH FACTOMINER
       #Plot individuals who have a cos2>0.7
       par(mfrow=c(2,2))
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T)
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T, select='cos2 0.7')
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T, select='cos2 0.7', unselect=0)
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T, select='cos2 0.7', unselect=1)
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T, select='cos2 0.7', unselect='grey70')
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T)
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 0.7')
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 0.7', unselect=0)
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 0.7', unselect=1)
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 0.7', unselect='grey70')
       
-      plot.PCA(res.PCA, habillage=13, cex=0.8, shadow=T, select='cos2 5')
-      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=13, cex=0.8, shadow=T, select='contrib 5')     #Those with the largest contributions are the most extreme individuals
+      plot.PCA(res.PCA, habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 5')
+      plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='contrib 5')     #Those with the largest contributions are the most extreme individuals
       ###################################################################
       
       ###################################################################
@@ -633,26 +656,29 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       
       s.corcircle(res.PCA$var)
       
-      plot(data_d$Points, res.PCA$ind$coord[,1],
+      plot(suppDataScores, res.PCA$ind$coord[,1],
            xlab="Points", ylab="PCA scores")
-      abline(lm(res.PCA$ind$coord[,1]~data_d$Points))
+      abline(lm(res.PCA$ind$coord[,1]~suppDataScores))
       
       s.label(res.PCA$ind$coord, clab=0.5)
       s.arrow(2*res.PCA$var$coord, add.p=T)
       ###################################################################
     } else {
-      #Adding supplementary continuous variables (Rank and Score)
-      par(mfrow=c(1,2))
-      PCA_supp <- PCA(data_comb[,1:12], scale.unit=T, ncp=5,
-                      quanti.sup=c(11,12), graph=T)
-      #Winners are those who score the most and therefore have the lowest rank
-      PCA_contrb2 <- data.frame(PCA_supp$var$contrib)
-      PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
-      #Variables most linked to number of points
-      pointVars <- rownames(PCA_contrb2)[1:4]
-      pointVars
-      insigVars <- rownames(PCA_contrb2[order(PCA_contrb2$Dim.1),])[1:2]
-      insigVars
+      data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+      colnames(data_comb) <- c(colnames(data), 'score', 'rank')    
+      
+#       #Adding supplementary continuous variables (Rank and Score)
+#       par(mfrow=c(1,2))
+#       PCA_supp <- PCA(data_comb, scale.unit=T, ncp=5,
+#                       quanti.sup=c(11,12), graph=T)
+#       #Winners are those who score the most and therefore have the lowest rank
+#       PCA_contrb2 <- data.frame(PCA_supp$var$contrib)
+#       PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
+#       #Variables most linked to number of points
+#       pointVars <- rownames(PCA_contrb2)[1:4]
+#       pointVars
+#       insigVars <- rownames(PCA_contrb2[order(PCA_contrb2$Dim.1),])[1:2]
+#       insigVars
       
 #       #Color individuals according to the categories' center of gravity
 #       # plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
@@ -685,6 +711,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       ##ONLY WITH FACTOMINER
       estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
       estim_ncp(data, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
+
+      estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
+      estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
       ###################################################################
       
       ###################################################################
@@ -736,9 +765,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       
       s.corcircle(PCA$var)
       
-      plot(data_comb$score, PCA$ind$coord[,1],
+      plot(data_scores, PCA$ind$coord[,1],
            xlab="Points", ylab="PCA scores")
-      abline(lm(PCA$ind$coord[,1]~data_comb$score))
+      abline(lm(PCA$ind$coord[,1]~data_scores))
       
       s.label(PCA$ind$coord, clab=0.5)
       s.arrow(2*PCA$var$coord, add.p=T)
