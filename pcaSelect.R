@@ -45,10 +45,16 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
   if (example=='YES') {
     data <- olympic$tab
     data_scores <- olympic$score
+    suppData <- decathlon
+    suppDataScores <- decathlon$Points
     data_d <- decathlon
   } else {
     data <- varData
     data_scores <- resultData
+    if (exists("suppData")) {
+      suppData <- cbind(data, suppData)
+      suppDataScores <- data_scores  
+    }
     data_d <- decathlon
   }  
   
@@ -243,12 +249,12 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     data_comb <- cbind(data, data_scores, rank(-data_scores))
     colnames(data_comb) <- c(colnames(data), 'score', 'rank')
     
-    if (exists("suppData")) {
+    if (exists("suppData") || example=='YES') {
       #Color individuals according to the categories' center of gravity
       par(mfrow=c(1,1))
-  
-      res.pca <- princomp(data_d[,1:10], cor=T)
-      catNames <- names(table(data_d[,13]))
+        
+      res.pca <- princomp(suppData[,-(ncol(suppData))], cor=T)
+      catNames <- names(table(suppData[,ncol(suppData)]))
       plot(-res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(data_d[,13]==catNames[1],'black','red'),
            main='Individual factor map (PCA)\n(princomp)', xlab='Dim 1', ylab='Dim 2')
       text(-res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(data_d[,13]==catNames[1],'black','red'))
@@ -268,7 +274,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       ###################################################################
       #Graphing variables
       par(mfrow=c(1,1))
-      biplot(pca, main='primcomp Results', col=c('white', 'black'))
+      biplot(res.pca, main='primcomp Results', col=c('white', 'black'))
       abline(h=0, lty=2)
       abline(v=0, lty=2)
       ###################################################################
@@ -303,9 +309,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
       s.corcircle(pca.var.coord)
       
-      plot(data_d$Points, -res.pca$scores[,1],
+      plot(suppDataScores, -res.pca$scores[,1],
            xlab='Points', ylab='PCA score')
-      abline(lm(-res.pca$scores[,1]~data_d$Points))
+      abline(lm(-res.pca$scores[,1]~suppDataScores))
       
       pca.coord <- -res.pca$scores[,1:5]
       pca.coord[,2] <- -pca.coord[,2]
@@ -530,7 +536,7 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     data_comb <- cbind(data, data_scores, rank(-data_scores))
     colnames(data_comb) <- c(colnames(data), 'score', 'rank')
     
-    if (exists("suppData")) {
+    if (exists("suppData")|| example=='YES') {
         
       #Adding supplementary continuous variables (Rank and Score)
       par(mfrow=c(1,2))
