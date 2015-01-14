@@ -1,0 +1,58 @@
+---
+title: "Sample Document"
+output:
+  html_document:
+    toc: true
+    theme: united
+  pdf_document:
+    toc: true
+    highlight: zenburn
+---
+
+Header 1
+-----------------------------------------------------
+
+This is an R Markdown document. 
+
+Use an asterisk mark to provide emphasis such as *italics* and **bold**.
+
+Create lists with a dash:
+
+- Item 1
+- Item 2
+- Item 3
+
+You can write `in-line` code with a back-tick.
+
+```
+Code block display
+with fixed-width font
+```
+
+> Blockquotes are offset
+
+
+
+
+R Code Chunks
+------------------------------------------
+
+
+  With R Markdown, you can insert R code chunks including plots:
+  
+```{r qplot, fig.width=4, fig.height=3, message=FALSE}
+#quick summary and plot
+library(ggplot2)
+summary(cars)
+qplot(speed, dist, data=cars) + 
+  geom_smooth()
+```
+
+
+More Tools
+------------------------------------------
+
+I counted `r 1+1` red trucks on the highway.
+
+The arithmetic mean is equal to $\frac{1}{n} \sum_{i=i}^{n} x_{i}$, or the summation of n numbers divided by n.
+
