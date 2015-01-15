@@ -43,9 +43,11 @@ data(decathlon)
 #resultData <- mtcars[,1]
 #suppData <- ifelse(mtcars[,2]>=6,'hi','lo')
   
-pcaSelect <- function(method, file='output.pdf', varData, resultData, example, ..) {
+pcaSelect <- function(method, pdf="YES", file='output.pdf', varData, resultData, example, ..) {
   
-  pdf(file)
+  if (pdf=="YES") {
+    pdf(file)
+  }
   
   if (example=='YES') {
     data <- olympic$tab
@@ -775,6 +777,9 @@ pcaSelect <- function(method, file='output.pdf', varData, resultData, example, .
     }
   }
   
-  graphics.off()
-  print(paste0('output saved in ', getwd(), '/', file))
+  if (pdf=="YES") {
+    graphics.off()
+    print(paste0('output saved in ', getwd(), '/', file))
+  }
+  
 }

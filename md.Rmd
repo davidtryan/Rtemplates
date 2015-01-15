@@ -1,16 +1,17 @@
 ---
 title: "Sample Document"
 output:
-  html_document:
-    theme: united
-    toc: yes
   pdf_document:
     highlight: zenburn
     toc: yes
+  html_document:
+    theme: united
+    toc: yes
+  word_document: default
 ---
 
-Header 1
------------------------------------------------------
+
+## Header 1
 
 This is an R Markdown document. 
 

@@ -3,16 +3,15 @@
 ## http://rmarkdown.rstudio.com/
 ## http://blog.rstudio.org/2014/06/18/r-markdown-v2/
 ## https://support.rstudio.com/hc/en-us/articles/200552086-Using-R-Markdown
-
-#Current
-# http://shiny.rstudio.com/articles/rmarkdown.html
-# https://onlinecourses.science.psu.edu/statprogram/markdown
+## http://shiny.rstudio.com/articles/rmarkdown.html
+## https://onlinecourses.science.psu.edu/statprogram/markdown
 
 #TBD
 # http://shiny.rstudio.com/articles/rm-cheatsheet.html
 # http://cran.r-project.org/web/packages/markdown/index.html
 
 #Interactive
+# http://shiny.rstudio.com/articles/interactive-docs.html
 # http://rmarkdown.rstudio.com/authoring_shiny.html  
 # http://rmarkdown.rstudio.com/authoring_embedded_shiny.html
 # http://blog.rstudio.org/category/shiny/
