@@ -2,11 +2,11 @@
 title: "Sample Document"
 output:
   html_document:
-    toc: true
     theme: united
+    toc: yes
   pdf_document:
-    toc: true
     highlight: zenburn
+    toc: yes
 ---
 
 Header 1
@@ -37,8 +37,7 @@ with fixed-width font
 R Code Chunks
 ------------------------------------------
 
-
-  With R Markdown, you can insert R code chunks including plots:
+With R Markdown, you can insert R code chunks including plots:
   
 ```{r qplot, fig.width=4, fig.height=3, message=FALSE}
 #quick summary and plot
@@ -48,6 +47,19 @@ qplot(speed, dist, data=cars) +
   geom_smooth()
 ```
 
+You can also show the results of code without the underlying code itself. You can also format tables.
+
+```{r qplot2, fig.width=4, fig.height=3, message=FALSE, echo=FALSE}
+#quick summary and plot
+library(ggplot2)
+library(knitr)
+knitr::kable(summary(cars))
+#summary(cars)
+qplot(speed, dist, data=cars) + 
+  geom_smooth()
+```
+
+
 
 More Tools
 ------------------------------------------
@@ -55,4 +67,23 @@ More Tools
 I counted `r 1+1` red trucks on the highway.
 
 The arithmetic mean is equal to $\frac{1}{n} \sum_{i=i}^{n} x_{i}$, or the summation of n numbers divided by n.
+
+You can create a notebook or html from an R script by passing it to render with `rmarkdown::render('file.R', 'html_document')
+
+You can use the googleVis package to create interactive plots, as well as embed Shiny apps.
+
+You can customize chunk options to tailor the evaluation.
+
+You can cache chunks of code to save and reuse.
+
+You can also embed links like this: <http:/rmarkdown.rstudio.com>.
+
+
+# Say Hello to markdown
+
+Markdown is an **easy to use** format for writing reports. It resembles what you naturally write every time you compose an email. In fact, you may have already used markdown *without realizing it*. These websites all rely on markdown formatting
+
+* [Github](www.github.com)
+* [StackOverflow](www.stackoverflow.com)
+* [Reddit](www.reddit.com)
 

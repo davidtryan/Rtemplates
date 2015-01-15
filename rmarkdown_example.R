@@ -1,17 +1,23 @@
 ## Markdown Resources
 
-# http://rmarkdown.rstudio.com/
-# http://rmarkdown.rstudio.com/authoring_shiny.html  
-# http://rmarkdown.rstudio.com/authoring_embedded_shiny.html
-# https://support.rstudio.com/hc/en-us/articles/200552086-Using-R-Markdown
+## http://rmarkdown.rstudio.com/
+## http://blog.rstudio.org/2014/06/18/r-markdown-v2/
+## https://support.rstudio.com/hc/en-us/articles/200552086-Using-R-Markdown
+
+#Current
+# http://shiny.rstudio.com/articles/rmarkdown.html
+# https://onlinecourses.science.psu.edu/statprogram/markdown
+
+#TBD
 # http://shiny.rstudio.com/articles/rm-cheatsheet.html
 # http://cran.r-project.org/web/packages/markdown/index.html
-# https://onlinecourses.science.psu.edu/statprogram/markdown
-# http://blog.rstudio.org/2014/06/18/r-markdown-v2/
+
+#Interactive
+# http://rmarkdown.rstudio.com/authoring_shiny.html  
+# http://rmarkdown.rstudio.com/authoring_embedded_shiny.html
 # http://blog.rstudio.org/category/shiny/
 # http://blog.rstudio.org/2014/06/19/interactive-documents-an-incredibly-easy-way-to-use-shiny/
 # https://gist.github.com/wch/9744711
-
 # http://stackoverflow.com/questions/24239420/tex-package-not-installing-in-r-version-3-1-0
 
 #####################################################################
