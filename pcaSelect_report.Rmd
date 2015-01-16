@@ -10,9 +10,8 @@ output:
     toc: yes
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ## References
@@ -55,22 +54,22 @@ data(decathlon)
 ### Aliases: decathlon
 ### Keywords: datasets
 
+library(knitr)
 #test:
 #varData <- mtcars[,3:11]
 #resultData <- mtcars[,1]
 #suppData <- ifelse(mtcars[,2]>=6,'hi','lo')
 ```
 
-You can also embed plots, for example:
+Inputting required data of interest:
 
 ```{r, echo=FALSE}
-
 method <- 'FactoMineR'
 file <- "R/OutputFiles/md_test.pdf"
 pdf <- "NO"
-varData <- mtcars[,3:11]
+varData <- mtcars[,2:11]
 resultData <- mtcars[,1]
-suppData <- ifelse(mtcars[,2]>=6,'hi','lo')
+# suppData <- ifelse(mtcars[,2]>=6,'hi','lo')
 example <- "NO"
 
 if (example=='YES') {
@@ -80,6 +79,8 @@ if (example=='YES') {
   suppDataScores <- decathlon$Points
 #     data_d <- decathlon
   print('Running Olympic and Decathlon Data Example')
+  summary(olympic)
+  summary(suppData)
 } else {
   data <- varData
   data_scores <- resultData
@@ -88,16 +89,24 @@ if (example=='YES') {
     suppDataScores <- data_scores  
   }
 #     data_d <- decathlon
-}  
+}
+
+summary(data)
+summary(data_scores)
+if(exists("supData")) {
+  summary(suppData)
+}
 ```
+
+
+Here we have initial PCA plots:
 
 ```{r, echo=FALSE}
 if (method=='princomp') {
   
-
   if (pdf=="YES") {
     pdf(file)
-  }
+   }
 
   ###################################################################
   ## Compare initial plots
@@ -113,12 +122,53 @@ if (method=='princomp') {
   abline(h=0, lty=2)
   abline(v=0, lty=2)
   ###################################################################
+}
+```
+
+```{r, echo=FALSE}  
+if (method=='FactoMineR') {
+    
+  if (pdf=="YES") {
+    pdf(file)
+  }
   
+  ########################################################$###########
+  ## Compare initial plots
+  par(mfrow=c(1,2))
+  PCA <- PCA(data, scale.unit=T, ncp=5, graph=T)
+  ###################################################################
+}
+```
+
+
+Here we have the PCA loadings:
+
+```{r, echo=FALSE, warning=FALSE}
+if (method=='princomp') {
   ###################################################################
   ## compare loadings
-  pca$loadings
+  knitr::kable(pca$loadings[,])
+#   pca$loadings
   ###################################################################
-  
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+
+  ###################################################################
+  ## compare loadings
+  PCA.loadings <- sweep(PCA$var$coord, 2, sqrt(PCA$eig[1:5,1]), FUN="/")
+  knitr::kable(PCA.loadings)
+  ###################################################################
+}
+```
+
+
+Next, are PCA eigenvalues:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   ###################################################################
   ## Compare eigenvalues
   pca.eig <- pca$sdev^2
@@ -126,15 +176,51 @@ if (method=='princomp') {
   vars <- vars/sum(vars) 
   pca.eig <- cbind(pca.eig, vars*100, cumsum(vars)*100)
   colnames(pca.eig) <- c('eigenvalue', 'percentage of variance', 'cumulative percentage of variance')
-  pca.eig
+  knitr::kable(pca.eig)
   ###################################################################
-  
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  ###################################################################
+  ## Compare eigenvalues
+  knitr::kable(PCA$eig)
+  ###################################################################
+}
+```
+
+
+Next, we plot the variances of each component. We want to select the number of PCs that are the elbow:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   ###################################################################
   ## Compare plots
   par(mfrow=c(1,2))
   plot(pca)
   plot(pca, type='l')
-  
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  ###################################################################
+  ## Compare plots
+  par(mfrow=c(1,2))
+  PCA.bp <- barplot(PCA$eig[,1], main="PCA.olympic", xlab='', names.arg=rownames(PCA$eig), ylab='Variances')
+  plot(x=PCA.bp, y=PCA$eig[,1], main="PCA.olympic", xlab='', xaxt='n', ylab='Variances')
+  axis(1, at=PCA.bp, labels=rownames(PCA$eig), las=2)
+  lines(x=PCA.bp, y=PCA$eig[,1], type='l')
+}
+```
+
+
+Next, is a plot of the individuals and their PC1 and PC2 scores plotted:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+
   par(mfrow=c(1,1))
   plot(pca$scores[,1], pca$scores[,2], col='red', pch=0, ylab="Dim 2", xlab="Dim 1", main='Individual factor map (PCA)\n(princomp)')
   legend("topright", c('princomp'), pch=c(0), col=c("red"), cex=0.75, bty='n')
@@ -142,6 +228,23 @@ if (method=='princomp') {
   abline(h=0, lty=2)
   abline(v=0, lty=2)
   ###################################################################
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  par(mfrow=c(1,1))
+  plot(PCA)
+  legend("topright", c('FactoMineR'), pch=c(19), col=c("black"), cex=0.75, bty='n')
+  ###################################################################
+}
+```
+
+
+Continuing, there are three plots showing two examples of the pca scores as a result of different variables. The last plot shows how the PCA scores based on PC1.
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   
   ###################################################################
   ## Compare Plots (extended - examples)
@@ -161,6 +264,37 @@ if (method=='princomp') {
   
   par(mar=c(5,4,4,2))
   ###################################################################
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  ###################################################################
+  ## Compare Plots (extended - examples)
+  # biplot(pca.olympic)
+  # data.frame(data[, '1500'], pca.olympic$scores[,1])
+  layout(matrix(c(1,1,1,2,3,4), 2, 3, byrow=T), widths=c(1,1), heights=c(0.05,1))
+  par(mar=c(0,0,0,0))
+  plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+  text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
+  
+  par(mar=c(5,4,0.1,2))
+  plot(data[,floor(ncol(data)/2)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='PCA score')
+  plot(data[,ncol(data)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[ncol(data)], ylab='PCA score')
+  #Overall score
+  plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
+  #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
+  
+  par(mar=c(5,4,4,2))
+  ###################################################################
+}
+```
+
+
+Most important variables for PC1:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   
   ###################################################################
   #The first axis opposes athletes who are "good everywhere" like Karpov during the Olympic Games between those who are 
@@ -183,6 +317,35 @@ if (method=='princomp') {
   }
   impNums <- impList[maxIndList]
   names(impNums)  
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') { 
+  ###################################################################
+  #The first axis opposes athletes who are "good everywhere" like Karpov during the Olympic Games between those who are 
+  #"bad everywhere" like Bourguignon during the Decastar. This dimension is particularly linked to the variables of speed 
+  #and long jump which constitute a homogeneous group.
+  
+  #Variables linked to first principal component
+  #FactoMineR
+  PCA_contrb2 <- data.frame(PCA$var$contrib)
+  PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
+  rownames(PCA_contrb2)[1:length(PCA_contrb2)]
+  #These tables give the correlation coefficient and the p-value of the 
+  #variables which are significantly correlated to the principal dimensions. 
+  #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
+  charCat <- dimdesc(PCA, axes=c(1,2))$Dim.1$quanti
+  impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
+  impCat
+}
+```
+
+
+Plots of the most important variables vs. PCA PC1 scores:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
 
   #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
   layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
@@ -217,7 +380,52 @@ if (method=='princomp') {
   
   layout(matrix(c(1,1)))
   par(mar=c(5,4,4,2))
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
+  layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+  par(mar=c(0.5,0,0.5,0))
+  plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+  text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
   
+  par(mar=c(5,4,0.1,2))
+#     olympic_p <- data
+
+  counter <- 0
+  for (i in 1:length(impCat)) {
+    counter <- counter+1
+    if (counter>4) {
+      layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
+      par(mar=c(0.5,0,0.5,0))
+      plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
+      text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
+      par(mar=c(5,4,0.1,2))
+      counter <- 0
+    }
+    var <- impCat[i]
+    plot(data[,var], PCA$ind$coord[,1], xlab=var, ylab='score')
+    abline(lm(PCA$ind$coord[,1]~data[,var]))
+  }
+  #Overall score
+  plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
+  abData <- data.frame(cbind(data_scores, PCA$ind$coord[,1]))
+  abline(lm(abData[,1]~(abData[,2])))
+  # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
+  # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
+  
+  layout(matrix(c(1,1)))    
+  par(mar=c(5,4,4,2))
+}
+```
+
+
+Most important variables for PC2:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   ###########VARIABLES BASED ON STRENGTH###################
   #The second axis opposes athletes who are strong (variables "Discus" and "Shot.put") between those who are not. 
   #The variables "Discus", "Shot.put" and "High.jump" are not much correlated to the variables "X100m", "X400m", "X110m.hurdle" 
@@ -239,6 +447,34 @@ if (method=='princomp') {
   }
   impNums <- impList[maxIndList]
   names(impNums)
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  ###########VARIABLES BASED ON STRENGTH###################
+  #The second axis opposes athletes who are strong (variables "Discus" and "Shot.put") between those who are not. 
+  #The variables "Discus", "Shot.put" and "High.jump" are not much correlated to the variables "X100m", "X400m", "X110m.hurdle" 
+  #and "Long.jump". This means that strength is not much correlated to speed.
+  
+  #Variables linked to second principal component
+  PCA_contrb2 <- data.frame(PCA$var$contrib)
+  PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.2),]
+  rownames(PCA_contrb2)[1:length(PCA_contrb2)]
+  #These tables give the correlation coefficient and the p-value of the 
+  #variables which are significantly correlated to the principal dimensions. 
+  #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
+  charCat <- dimdesc(PCA, axes=c(1,2))$Dim.2$quanti
+  impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
+  impCat
+}
+```
+
+
+Plots of the most important variables vs. PCA PC2 scores:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
   
   #Overall score
   par(mfrow=c(1,1))
@@ -277,270 +513,11 @@ if (method=='princomp') {
   #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
   #slow athletes (like Casarsa), fast but weak athletes (like Warners) and slow and weak (relatively speaking!) athletes (like Lorenzo).
   ###################################################################
-  
-  ###################################################################
-  ############## Supplementary variables #############
-  
-  if (exists("suppData") || example=='YES') {
-    if (example=="YES") {
-      data_comb <- suppData[,1:12]
-    } else {
-      data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
-      colnames(data_comb) <- c(colnames(data), 'score', 'rank')        
-    }
-    
-    #Color individuals according to the categories' center of gravity
-    par(mfrow=c(1,1))
-      
-    res.pca <- princomp(data_comb, cor=T)
-    catNames <- names(table(suppData[,ncol(suppData)]))
-    plot(res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'),
-         main='Individual factor map (PCA)\n(princomp)', xlab='Dim 1', ylab='Dim 2')
-    text(res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'))
-    abline(h=0, lty=2)
-    abline(v=0, lty=2)
-    legend("topleft", catNames, text.col=c("black","red"), cex=0.75)
-    
-    #Qualitative supplementary variables
-    #....
-    #When looking at the points representing "Decastar" and "Olympic Games", we notice that this last one has higher coordinates on the 
-    #first axis than the first one. This shows an evolution in the performances of the athletes. All the athletes who participated to the two 
-    #competitions have then slightly better results for the Olympic Games. 
-    #However, there is no difference between the points "Decastar" and "Olympic Games" for the second axis. This means that the athletes have 
-    #improved their performance but did not change profile (except for Zsivoczky who went from slow and strong during the Decastar to fast and 
-    #weak during the Olympic Games).
-  
-    ###################################################################
-    #Graphing variables
-    par(mfrow=c(1,1))
-    biplot(res.pca, main='primcomp Results', col=c('white', 'black'))
-    abline(h=0, lty=2)
-    abline(v=0, lty=2)
-    ###################################################################
-    
-    ###################################################################
-    ## Ranking variable contribution for combined first two PCs
-    impList <- res.pca$loadings[,1:2]
-    impList <- sort(abs(impList[,1])+abs(impList[,2]))
-    maxInd <- which(abs(impList)==max(abs(impList)))
-    maxIndList <- c(maxInd)
-    swp <- 0
-    while (swp==0 && length(maxIndList)<4) {
-      catImpList <- impList[-c(maxIndList)]
-      maxInd_t <- which(abs(impList)==max(abs(catImpList)))
-      if (maxInd_t!=(maxInd-1)) {
-        swp=1
-      }
-      maxInd <- maxInd_t
-      maxIndList <- c(maxIndList, maxInd_t)
-    }
-    impNums <- impList[maxIndList]
-    names(impNums)
-    ###################################################################
-    
-    ###################################################################
-    ## Combined summary plots
-    #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
-    par(mfrow=c(2,2))
-    pc.bp <- plot(res.pca, main="")
-    
-    pca.var.coord <- res.pca$loadings[,1:5]
-#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
-    s.corcircle(pca.var.coord)
-    
-    plot(suppDataScores, res.pca$scores[,1],
-         xlab='Points', ylab='PCA score')
-    abline(lm(res.pca$scores[,1]~suppDataScores))
-    
-    pca.coord <- res.pca$scores[,1:5]
-#       pca.coord[,2] <- -pca.coord[,2]
-    s.label(pca.coord, clab=0.5)
-    s.arrow(2*pca.var.coord, add.p=T) 
-    ###################################################################
-  
-  } else {
-    data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
-    colnames(data_comb) <- c(colnames(data), 'score', 'rank')
-    
-    ###################################################################
-    #Graphing variables
-    par(mfrow=c(1,1))
-    biplot(pca, main='primcomp Results', col=c('white', 'black'))
-    abline(h=0, lty=2)
-    abline(v=0, lty=2)
-    ###################################################################
-    
-    ###################################################################
-    ## Ranking variable contribution for combined first two PCs
-    impList <- pca$loadings[,1:2]
-    impList <- sort(abs(impList[,1])+abs(impList[,2]))
-    maxInd <- which(abs(impList)==max(abs(impList)))
-    maxIndList <- c(maxInd)
-    swp <- 0
-    while (swp==0 && length(maxIndList)<4) {
-      catImpList <- impList[-c(maxIndList)]
-      maxInd_t <- which(abs(impList)==max(abs(catImpList)))
-      if (maxInd_t!=(maxInd-1)) {
-        swp=1
-      }
-      maxInd <- maxInd_t
-      maxIndList <- c(maxIndList, maxInd_t)
-    }
-    impNums <- impList[maxIndList]
-    names(impNums)
-    ###################################################################
-    
-    ###################################################################
-    ## Combined summary plots
-    #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
-    par(mfrow=c(2,2))
-    pc.bp <- plot(pca, main="")
-    
-    pca.var.coord <- pca$loadings[,1:5]
-#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
-    s.corcircle(pca.var.coord)
-    
-    plot(data_scores, pca$scores[,1],
-         xlab='points/score', ylab='PCA score')
-    abline(lm(pca$scores[,1]~data_scores))
-    
-    pca.coord <- pca$scores[,1:5]
-#       pca.coord[,2] <- -pca.coord[,2]
-    s.label(pca.coord, clab=0.5)
-    s.arrow(2*pca.var.coord, add.p=T) 
-    ###################################################################
-  }
-
-  if (pdf=="YES") {
-    graphics.off()
-    print(paste0('output saved in ', getwd(), '/', file))
-  }
-
 }
-``` 
- 
+```
 
- 
-```{r, echo=FALSE}  
+```{r, echo=FALSE}
 if (method=='FactoMineR') {
-    
-  if (pdf=="YES") {
-    pdf(file)
-  }
-  
-  ########################################################$###########
-  ## Compare initial plots
-  par(mfrow=c(1,2))
-  PCA <- PCA(data, scale.unit=T, ncp=5, graph=T)
-  ###################################################################
-  
-  ###################################################################
-  ## compare loadings
-  PCA.loadings <- sweep(PCA$var$coord, 2, sqrt(PCA$eig[1:5,1]), FUN="/")
-  ###################################################################
-  
-  ###################################################################
-  ## Compare eigenvalues
-  PCA$eig
-  ###################################################################
-  
-  ###################################################################
-  ## Compare plots
-  par(mfrow=c(1,2))
-  PCA.bp <- barplot(PCA$eig[,1], main="PCA.olympic", xlab='', names.arg=rownames(PCA$eig), ylab='Variances')
-  plot(x=PCA.bp, y=PCA$eig[,1], main="PCA.olympic", xlab='', xaxt='n', ylab='Variances')
-  axis(1, at=PCA.bp, labels=rownames(PCA$eig), las=2)
-  lines(x=PCA.bp, y=PCA$eig[,1], type='l')
-  
-  par(mfrow=c(1,1))
-  plot(PCA)
-  legend("topright", c('FactoMineR'), pch=c(19), col=c("black"), cex=0.75, bty='n')
-  ###################################################################
-  
-  ###################################################################
-  ## Compare Plots (extended - examples)
-  # biplot(pca.olympic)
-  # data.frame(data[, '1500'], pca.olympic$scores[,1])
-  layout(matrix(c(1,1,1,2,3,4), 2, 3, byrow=T), widths=c(1,1), heights=c(0.05,1))
-  par(mar=c(0,0,0,0))
-  plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-  text(1,0,sprintf('Example Plots vs. PCA Score'),font=2, cex=1.25)
-  
-  par(mar=c(5,4,0.1,2))
-  plot(data[,floor(ncol(data)/2)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[floor(ncol(data)/2)], ylab='PCA score')
-  plot(data[,ncol(data)], PCA$ind$coord[,1], pch=23, bg='red', cex=2, xlab=colnames(data)[ncol(data)], ylab='PCA score')
-  #Overall score
-  plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', pch=23, bg='red', cex=2, ylab='PCA score')
-  #Since the first variable (PC) seems related to speed, we should not be surprised that an increase in this variable (PC) decreases the overall decathlon score
-  
-  par(mar=c(5,4,4,2))
-  ###################################################################
- 
-  ###################################################################
-  #The first axis opposes athletes who are "good everywhere" like Karpov during the Olympic Games between those who are 
-  #"bad everywhere" like Bourguignon during the Decastar. This dimension is particularly linked to the variables of speed 
-  #and long jump which constitute a homogeneous group.
-  
-  #Variables linked to first principal component
-  #FactoMineR
-  PCA_contrb2 <- data.frame(PCA$var$contrib)
-  PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
-  rownames(PCA_contrb2)[1:length(PCA_contrb2)]
-  #These tables give the correlation coefficient and the p-value of the 
-  #variables which are significantly correlated to the principal dimensions. 
-  #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
-  charCat <- dimdesc(PCA, axes=c(1,2))$Dim.1$quanti
-  impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
-  
-  #Plot variables linked to first principal component to see how chanages in varaibles contribute to score
-  layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
-  par(mar=c(0.5,0,0.5,0))
-  plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-  text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
-  
-  par(mar=c(5,4,0.1,2))
-#     olympic_p <- data
-
-  counter <- 0
-  for (i in 1:length(impCat)) {
-    counter <- counter+1
-    if (counter>4) {
-      layout(matrix(c(1,1,2,3,4,5), 3, 2, byrow=T), widths=c(1,1), heights=c(0.1,1,1))
-      par(mar=c(0.5,0,0.5,0))
-      plot(0,xaxt='n',yaxt='n',bty='n',pch='',ylab='',xlab='')
-      text(1,0,sprintf('Variables linked to PC1 (FactoMineR)'),font=2, cex=1.25)
-      par(mar=c(5,4,0.1,2))
-      counter <- 0
-    }
-    var <- impCat[i]
-    plot(data[,var], PCA$ind$coord[,1], xlab=var, ylab='score')
-    abline(lm(PCA$ind$coord[,1]~data[,var]))
-  }
-  #Overall score
-  plot(PCA$ind$coord[,1], data_scores, xlab='Comp. 1', ylab='PCA score')
-  abData <- data.frame(cbind(data_scores, PCA$ind$coord[,1]))
-  abline(lm(abData[,1]~(abData[,2])))
-  # plot(olympic_p[,c('400')], PCA.olympic$ind$coord[,1], xlab='400', ylab='score')
-  # abline(lm(PCA.olympic$ind$coord[,1]~olympic_p[,c('400')]))
-  
-  layout(matrix(c(1,1)))    
-  par(mar=c(5,4,4,2))
-  
-  ###########VARIABLES BASED ON STRENGTH###################
-  #The second axis opposes athletes who are strong (variables "Discus" and "Shot.put") between those who are not. 
-  #The variables "Discus", "Shot.put" and "High.jump" are not much correlated to the variables "X100m", "X400m", "X110m.hurdle" 
-  #and "Long.jump". This means that strength is not much correlated to speed.
-  
-  #Variables linked to second principal component
-  PCA_contrb2 <- data.frame(PCA$var$contrib)
-  PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.2),]
-  rownames(PCA_contrb2)[1:length(PCA_contrb2)]
-  #These tables give the correlation coefficient and the p-value of the 
-  #variables which are significantly correlated to the principal dimensions. 
-  #Both active and supplementary variables whose p-value is smaller than 0.05 appear.dimdesc(PCA.olympic, axes=c(1,2)) 
-  charCat <- dimdesc(PCA, axes=c(1,2))$Dim.2$quanti
-  impCat <- names(sort(-abs(charCat[,1]))[1:length(PCA_contrb2)])
-  
   #Overall score
   par(mfrow=c(1,1))
   plot(PCA$ind$coord[,2], data_scores, xlab='Comp. 2', ylab='PCA score', main='PC2 vs. PCA score (princomp)')
@@ -577,7 +554,51 @@ if (method=='FactoMineR') {
   #At the end of this first approach, we can divide the factorial plan into four parts: fast and strong athletes (like Sebrle), 
   #slow athletes (like Casarsa), fast but weak athletes (like Warners) and slow and weak (relatively speaking!) athletes (like Lorenzo).
   ###################################################################
+}
+```
+
+
+##Supplementary data graphs:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  ###################################################################
+  ############## Supplementary variables #############
   
+  if (exists("suppData") || example=='YES') {
+    if (example=="YES") {
+      data_comb <- suppData[,1:12]
+    } else {
+      data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+      colnames(data_comb) <- c(colnames(data), 'score', 'rank')        
+    }
+    
+    #Color individuals according to the categories' center of gravity
+    par(mfrow=c(1,1))
+      
+    res.pca <- princomp(data_comb, cor=T)
+    catNames <- names(table(suppData[,ncol(suppData)]))
+    plot(res.pca$scores[,1], res.pca$scores[,2],  pch=19, cex=0.7,  col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'),
+         main='Individual factor map (PCA)\n(princomp)', xlab='Dim 1', ylab='Dim 2')
+    text(res.pca$scores[,1], res.pca$scores[,2], rownames(res.pca$scores), cex=0.8, pos=4, col=ifelse(suppData[,ncol(suppData)]==catNames[1],'black','red'))
+    abline(h=0, lty=2)
+    abline(v=0, lty=2)
+    legend("topleft", catNames, text.col=c("black","red"), cex=0.75)
+    
+    #Qualitative supplementary variables
+    #....
+    #When looking at the points representing "Decastar" and "Olympic Games", we notice that this last one has higher coordinates on the 
+    #first axis than the first one. This shows an evolution in the performances of the athletes. All the athletes who participated to the two 
+    #competitions have then slightly better results for the Olympic Games. 
+    #However, there is no difference between the points "Decastar" and "Olympic Games" for the second axis. This means that the athletes have 
+    #improved their performance but did not change profile (except for Zsivoczky who went from slow and strong during the Decastar to fast and 
+    #weak during the Olympic Games).
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
 
   ###################################################################
   ############## Supplementary variables #############
@@ -595,16 +616,15 @@ if (method=='FactoMineR') {
     par(mfrow=c(1,2))
     PCA_supp <- PCA(data_comb, scale.unit=T, ncp=5,
                             quanti.sup=c(ncol(data_comb)-1,ncol(data_comb)), graph=T)
-    
-    #Winners are those who score the most and therefore have the lowest rank
-    PCA_contrb2 <- data.frame(PCA_supp$var$contrib)
-    PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
-    #Variables most linked to number of points
-    pointVars <- rownames(PCA_contrb2)[1:4]
-    pointVars
-    insigVars <- rownames(PCA_contrb2[order(PCA_contrb2$Dim.1),])[1:2]
-    insigVars
-    
+  }
+}
+```
+
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     #Color individuals according to the categories' center of gravity
     # plot.PCA(res.pca, axes=c(1, 2), choix="ind", habillage=13)
     #FactoMineR
@@ -613,7 +633,14 @@ if (method=='FactoMineR') {
     res.PCA <- PCA(suppData_comb, scale.unit=T, ncp=5, quanti.sup=c(ncol(suppData_comb)-2,ncol(suppData_comb)-1), quali.sup=ncol(suppData_comb), graph=T)
     par(mfrow = c(1,1))
     plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T)
-      
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     #Qualitative supplementary variables
     #....
     #To see whether the categories of the supplementary variable are significantly different from each other, we can draw confidence ellipses around them.
@@ -628,7 +655,14 @@ if (method=='FactoMineR') {
     #weak during the Olympic Games).
     
     ###################################################################
-    
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     ###################################################################
     #The package FactoMineR provides the function estim_ncp to calculate the best number
     #of dimensions. In this function generalized cross validation approximation (GCV) and
@@ -641,7 +675,14 @@ if (method=='FactoMineR') {
     estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
     estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
     ###################################################################
-    
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     ###################################################################
     #Selecting individuals with specific features to plot
     #CAN ONLY BE DONE WITH FACTOMINER
@@ -656,7 +697,75 @@ if (method=='FactoMineR') {
     plot.PCA(res.PCA, habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='cos2 5')
     plot.PCA(res.PCA, axes=c(1, 2), choix="ind", habillage=ncol(suppData_comb), cex=0.8, shadow=T, select='contrib 5')     #Those with the largest contributions are the most extreme individuals
     ###################################################################
-    
+  }
+}
+```
+
+
+Most important variables based on inclusion of supplementary information:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (exists("suppData") || example=='YES') {
+    ###################################################################
+    ## Ranking variable contribution for combined first two PCs
+    impList <- res.pca$loadings[,1:2]
+    impList <- sort(abs(impList[,1])+abs(impList[,2]))
+    maxInd <- which(abs(impList)==max(abs(impList)))
+    maxIndList <- c(maxInd)
+    swp <- 0
+    while (swp==0 && length(maxIndList)<4) {
+      catImpList <- impList[-c(maxIndList)]
+      maxInd_t <- which(abs(impList)==max(abs(catImpList)))
+      if (maxInd_t!=(maxInd-1)) {
+        swp=1
+      }
+      maxInd <- maxInd_t
+      maxIndList <- c(maxIndList, maxInd_t)
+    }
+    impNums <- impList[maxIndList]
+    names(impNums)
+    ###################################################################
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+    #Winners are those who score the most and therefore have the lowest rank
+    PCA_contrb2 <- data.frame(PCA_supp$var$contrib)
+    PCA_contrb2 <- PCA_contrb2[order(-PCA_contrb2$Dim.1),]
+    #Variables most linked to number of points
+    pointVars <- rownames(PCA_contrb2)[1:4]
+    pointVars
+    insigVars <- rownames(PCA_contrb2[order(PCA_contrb2$Dim.1),])[1:2]
+    insigVars
+  }
+}
+```
+
+
+Supplementary data of variable contributions:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (exists("suppData") || example=='YES') {
+    ###################################################################
+    #Graphing variables
+    par(mfrow=c(1,1))
+    biplot(res.pca, main= 'primcomp Results', col=c('white', 'black'))
+    abline(h=0, lty=2)
+    abline(v=0, lty=2)
+    ###################################################################
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     ###################################################################
     #Graphing variables
     par(mfrow=c(1,3))
@@ -664,7 +773,14 @@ if (method=='FactoMineR') {
     plot(res.PCA, choix='var', shadow=T, select="contrib 5")
     plot(res.PCA, choix='var', shadow=T, select="cos2 5")
     ###################################################################
-    
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     ###################################################################
     ## Ranking variable contribution for combined first two PCs
     #FactoMineR
@@ -677,9 +793,45 @@ if (method=='FactoMineR') {
     for (i in 1:dim(res.PCA$var$cos2)[1]) {
       dimsum[i]<- sum(res.PCA$var$cos2[i,1:2])
     }
-    sort(dimsum, decreasing=T)
+    names(sort(dimsum, decreasing=T))
     ###################################################################
+  }
+}
+```
+
+
+Compiled summary plots:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (exists("suppData") || example=='YES') {
+    ###################################################################
+    ## Combined summary plots
+    #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
+    par(mfrow=c(2,2))
+    pc.bp <- plot(res.pca, main="")
     
+    pca.var.coord <- res.pca$loadings[,1:5]
+#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
+    s.corcircle(pca.var.coord)
+    
+    plot(suppDataScores, res.pca$scores[,1],
+         xlab='Points', ylab='PCA score')
+    abline(lm(res.pca$scores[,1]~suppDataScores))
+    
+    pca.coord <- res.pca$scores[,1:5]
+#       pca.coord[,2] <- -pca.coord[,2]
+    s.label(pca.coord, clab=0.5)
+    s.arrow(2*pca.var.coord, add.p=T) 
+    ###################################################################
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (exists("suppData") || example=='YES') {
+
     ###################################################################
     ## Combined summary plots
     #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
@@ -698,7 +850,21 @@ if (method=='FactoMineR') {
     s.label(res.PCA$ind$coord, clab=0.5)
     s.arrow(2*res.PCA$var$coord, add.p=T)
     ###################################################################
-  } else {
+  }
+}
+```
+
+
+
+
+
+
+
+##If no supplementary information...Biplot:
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (!(exists("suppData") || example=='YES')) {
     data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
     colnames(data_comb) <- c(colnames(data), 'score', 'rank')    
     
@@ -750,7 +916,14 @@ if (method=='FactoMineR') {
     estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="Smooth")
     estim_ncp(data_comb, ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")
     ###################################################################
-    
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (!(exists("suppData") || example=='YES')) {
+
     ###################################################################
     #Selecting individuals with specific features to plot
     #CAN ONLY BE DONE WITH FACTOMINER
@@ -765,7 +938,35 @@ if (method=='FactoMineR') {
     plot.PCA(PCA, cex=0.8, shadow=T, select='cos2 5')
     plot.PCA(PCA, axes=c(1, 2), choix="ind", cex=0.8, shadow=T, select='contrib 5')     #Those with the largest contributions are the most extreme individuals
     ###################################################################
+  }
+}
+```
+
+
+Variable plots if no supplementary information:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (!(exists("suppData") || example=='YES')) {
+ 
+    data_comb <- cbind(data, data_scores, rank(-data_scores, ties.method='min'))
+    colnames(data_comb) <- c(colnames(data), 'score', 'rank')
     
+    ###################################################################
+    #Graphing variables
+    par(mfrow=c(1,1))
+    biplot(pca, main='primcomp Results', col=c('white', 'black'))
+    abline(h=0, lty=2)
+    abline(v=0, lty=2)
+    ###################################################################
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (!(exists("suppData") || example=='YES')) {
+
     ###################################################################
     #Graphing variables
     par(mfrow=c(1,3))
@@ -773,7 +974,44 @@ if (method=='FactoMineR') {
     plot(PCA, choix='var', shadow=T, select="contrib 5")
     plot(PCA, choix='var', shadow=T, select="cos2 5")
     ###################################################################
+  }
+}
+```
+
+
+Ranking variable importance
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (!(exists("suppData") || example=='YES')) {
     
+    ###################################################################
+    ## Ranking variable contribution for combined first two PCs
+    impList <- pca$loadings[,1:2]
+    impList <- sort(abs(impList[,1])+abs(impList[,2]))
+    maxInd <- which(abs(impList)==max(abs(impList)))
+    maxIndList <- c(maxInd)
+    swp <- 0
+    while (swp==0 && length(maxIndList)<4) {
+      catImpList <- impList[-c(maxIndList)]
+      maxInd_t <- which(abs(impList)==max(abs(catImpList)))
+      if (maxInd_t!=(maxInd-1)) {
+        swp=1
+      }
+      maxInd <- maxInd_t
+      maxIndList <- c(maxIndList, maxInd_t)
+    }
+    impNums <- impList[maxIndList]
+    names(impNums)
+    ###################################################################
+  }
+}
+```
+
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (!(exists("suppData") || example=='YES')) {
+
     ###################################################################
     ## Ranking variable contribution for combined first two PCs
     #FactoMineR
@@ -788,7 +1026,43 @@ if (method=='FactoMineR') {
     }
     sort(dimsum, decreasing=T)
     ###################################################################
+  }
+}
+```
+
+
+Combined summary plots:
+
+```{r, echo=FALSE}
+if (method=='princomp') {
+  if (!(exists("suppData") || example=='YES')) {
+    ###################################################################
+    ## Combined summary plots
+    #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
+    par(mfrow=c(2,2))
+    pc.bp <- plot(pca, main="")
     
+    pca.var.coord <- pca$loadings[,1:5]
+#       pca.var.coord[,c(1,3,4,5)] <- -pca.var.coord[,c(1,3,4,5)]
+    s.corcircle(pca.var.coord)
+    
+    plot(data_scores, pca$scores[,1],
+         xlab='points/score', ylab='PCA score')
+    abline(lm(pca$scores[,1]~data_scores))
+    
+    pca.coord <- pca$scores[,1:5]
+#       pca.coord[,2] <- -pca.coord[,2]
+    s.label(pca.coord, clab=0.5)
+    s.arrow(2*pca.var.coord, add.p=T) 
+    ###################################################################
+  }
+}
+``` 
+ 
+```{r, echo=FALSE}
+if (method=='FactoMineR') {
+  if (!(exists("suppData") || example=='YES')) {
+
     ###################################################################
     ## Combined summary plots
     #http://pbil.univ-lyon1.fr/ade4/ade4-html/olympic.html
@@ -808,40 +1082,20 @@ if (method=='FactoMineR') {
     s.arrow(2*PCA$var$coord, add.p=T)
     ###################################################################
   }
-
+}
+```
+ 
+```{r, echo=FALSE}
   if (pdf=="YES") {
     graphics.off()
     print(paste0('output saved in ', getwd(), '/', file))
   }
-
-}
-
-```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-
-
-
-
-## Header 1
-
-This is an R Markdown document. 
-
-Use an asterisk mark to provide emphasis such as *italics* and **bold**.
-
-Create lists with a dash:
-
-- Item 1
-- Item 2
-- Item 3
-
-You can write `in-line` code with a back-tick.
-
-```
-Code block display
-with fixed-width font
 ```
 
-> Blockquotes are offset
+
+
+
+
+
 
 
