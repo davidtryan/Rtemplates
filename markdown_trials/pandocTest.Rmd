@@ -1,0 +1,11 @@
+
+
+
+```{rtest loopResults, include=FALSE}
+
+plot(1:10)
+
+```
+
+
+Print this `r` and stop

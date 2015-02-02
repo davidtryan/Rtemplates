@@ -1,0 +1,9 @@
+Results for result1
+---------------------------
+
+
+```r
+ plot(results[[res]]$x, results[[res]]$y)
+```
+
+<img src="./foo_files/figure-html/unnamed-chunk-1-1.png" title="" alt="" width="672" />

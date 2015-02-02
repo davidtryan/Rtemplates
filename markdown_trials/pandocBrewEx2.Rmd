@@ -1,0 +1,51 @@
+---
+output: html_document
+---
+```{r}
+# install.packages("pander")
+library(pander)
+```
+
+```{r}
+irisSummary <- apply(iris[, 1:4], 2, function(x) tapply(x, iris$Species, summary))
+irisSummary <- lapply(irisSummary, do.call, what = rbind)
+
+panderOptions("table.split.table", Inf)  ## don't split tables
+
+for (i in 1:2) {
+  set.caption(sub(".", " ", names(irisSummary)[1], fixed = TRUE))
+  pander(pandoc.table.return(irisSummary[[1]]))
+}
+
+# pander(irisSummary[i])
+
+pander(pandoc.table.return(irisSummary[[1]]))
+
+pander(irisSummary[[i]])
+
+# pander(irisSummary[[1:2]])
+# # pander(lapply(iris, summary))
+
+pander(pandoc.table(mtcars[1:3,1:4]))
+
+```
+
+```{r}
+for (i in 1:10) {
+  plot(i)
+}
+```
+
+
+
+
+Plot `r2`
+-----------
+
+
+```{r2}
+for (i in 1:10) {
+
+  plot(1:i)
+}
+```

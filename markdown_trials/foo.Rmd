@@ -1,0 +1,17 @@
+```{rinit}
+library(knitr)
+library(pander)
+```
+
+```{r loopResults, echo=FALSE, include=FALSE}
+results = list(result1 = data.frame(x=rnorm(3), y=rnorm(3)), result2=data.frame(x=rnorm(3), y=rnorm(3)))
+out=NULL
+
+print(length(results))
+
+for(i in 1:length(results)) {
+  res = names(results)[i]
+  out = c(out, knit_child('foosub.Rmd', sprintf('foosub-%d.txt', i)))
+  print(plot(1:10))
+}
+```
