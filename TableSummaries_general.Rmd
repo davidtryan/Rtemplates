@@ -1,0 +1,648 @@
+---
+title: "Table Summaries Report"
+author: "David Ryan"
+date: "Wednesday, January 21, 2015"
+output:
+  word_document: default
+  html_document:
+    theme: united
+    toc: yes
+---
+
+## Information on database files:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+##Set working directory
+# setwd('')
+
+## libraries
+# .libPaths('Z:/rpackages')
+
+## Useful packages and functions
+# source('')
+
+# .libPaths("Z:/rpackages")
+# library(Rsenal)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## Establish ODBC connection to database and pull data into R
+if ('RODBC' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("RODBC")
+}
+library ("RODBC")
+
+if ('ggplot2' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("ggplot2")
+}
+library ("ggplot2")
+
+if ('gridExtra' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("gridExtra")
+}
+library ("gridExtra")
+
+if ('reshape' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("reshape")
+}
+library("reshape")
+
+if ('markdown' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("reshape")
+}
+library("markdown")
+
+if ('knitr' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("knitr")
+}
+library("knitr")
+
+if ('pander' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("pander")
+}
+library('pander')
+
+if ('reshape2' %in% rownames(installed.packages()) == FALSE) {
+  install.packages ("reshape2")
+}
+library(reshape2)
+
+library(RODBC)
+library(data.table)
+
+# suppress(PackageStartupMessages(library(pander)))
+      
+```
+
+```{r, echo=FALSE}
+#Establishing connection to database.
+## setup connection to SQL Server
+# conn <- odbcDriverConnect ('driver={SQL Server};server=XXXX;database=XXXX;trusted_connection=true')
+connTables <- sqlTables(conn)
+# View(connTables)
+# knitr::kable(connTables)
+```
+
+```{r, echo=FALSE}
+#######################
+## Getting Metadata ## 
+#######################
+
+## I believe these are SQL Server Stored Procedures
+tab <- sqlQuery(conn, 'select * from information_schema.tables')
+col <- sqlQuery(conn, 'select * from information_schema.columns')
+
+## These have row counts per table
+sp <- sqlQuery(conn, 'select * from sys.partitions')
+so <- sqlQuery(conn, 'select * from sys.objects')
+ss <- merge(sp, so, by='object_id', all=T)
+ss <- ss[order(ss$rows, decreasing=T),]
+
+tab$rows <- NULL
+tab$cols <- NULL
+
+## Too slow (calculation of table rows and columns)
+# for(i in tab$TABLE_NAME) {
+#   q <- paste0('select count(', col$COLUMN_NAME[col$TABLE_NAME==i][1], ') from ', i)
+#   tmprow <- as.numeric(sqlQuery(conn, q))
+#   tmpcol <- sum(col$TABLE_NAME==i)
+#   tab$rows[tab$TABLE_NAME==i] <- tmprow
+#   tab$cols[tab$TABLE_NAME==i] <- tmpcol
+#   print(paste(which(tab$TABLE_NAME==i),i ))
+# }
+
+tableRow <- list()
+for (i in 1:length(tab$TABLE_NAME)) {
+  tabName <- as.character(tab$TABLE_NAME[i])
+  tableRow[i] <- ss$rows[which(ss$name==tabName)[1]]
+}
+tab$rows <- as.numeric(tableRow)
+
+tableCol <- list()
+for (i in 1:length(tab$TABLE_NAME)) {
+  tabName <- as.character(tab$TABLE_NAME[i])
+  tableCol[i] <- length(which(col$TABLE_NAME==tabName))
+}
+tab$cols <- as.numeric(tableCol)
+
+tab$obs <- tab$rows * tab$cols
+```
+
+```{r, echo=FALSE, results='hide'}
+###################################
+## Reading in some of each table ##
+###################################
+L <- list()
+for(i in unique(col$TABLE_NAME)){
+  L[[length(L)+1]] <- sqlQuery(conn, paste0('select top(1000) * from ', i))
+  names(L)[length(L)] <- i
+  if(length(L)%%20==0) print(length(L))
+}
+```
+
+```{r, echo=FALSE, results='hide'}
+#Bring a table from database to R workspace as a data.frame
+# sqlQuery(conn, 'select*from information_schema.tables')
+
+## Include in the table the number of entries and number of columns (raw)
+knitr::kable(tab)
+# knitr::kable(sqlQuery(conn, 'select*from information_schema.tables'))
+# #Same as
+connTablesSelect <- connTables[connTables$TABLE_TYPE=="TABLE",]
+numTables <- dim(connTablesSelect)[1]
+# View(connTablesSelect)
+# knitr::kable(connTablesSelect)
+
+```
+
+
+## Individual data table summaries:
+
+```{r, echo=FALSE, eval=TRUE, results='asis', warning=FALSE}
+
+start <- 135
+end <- 138
+for (i in start:end) {
+
+  cat(c('', sep='\n \n\n'))
+  cat ('=========================================================')
+  cat(c('', sep='\n\n\n'))
+  
+  #Example selecting top 100
+  #   myTable <- sqlQuery(conn, sprintf('select top(100)*from %s',myTableName))
+  myTableName <- connTablesSelect[i,c("TABLE_NAME")]
+  allTableNames <- connTablesSelect[28:138,c("TABLE_NAME")]
+  myTable <- sqlQuery(conn, sprintf('select all*from %s',myTableName))
+  cat ("###", myTableName)
+  cat(c('', sep='\n\n\n'))
+    
+  #########################################################################
+  #########################################################################
+  #########################################################################
+  
+  ##Table Summary
+  cat ("Number of rows ", nrow(myTable))
+  cat ('', sep='\n')
+  cat ("Number of columns ", ncol(myTable))
+  cat ('', sep='\n')
+  
+  ##Find unique identifier
+  #Get a list of unique identifiers for all my tables
+  unique_ids <- get_unique_ids(allTableNames, conn)
+  unique_id <- unique_ids[which(unique_ids$table==myTableName),]
+#   unique_id <- unique_id$unique_id
+  
+  print(knitr::kable(unique_id, align='l', padding=0))
+  cat(c('', sep='\n\n\n'))
+
+#########################################################################
+#########################################################################
+#########################################################################
+
+  if (dim(myTable)[1]==0) {
+    
+    #### Overall table summary - no entries in the table of interest
+    cat ("Empty data table - no row entries")
+    cat(c('', sep='\n\n\n'))
+    if (dim(myTable)[2]>0) {
+      vars <- data.frame(cbind(seq(1:length(colnames(myTable))),colnames(myTable)))
+      colnames(vars) <- c("Variable Number","Table Attribute Columns")
+      print (knitr::kable(vars, align='l', caption="Table Variables"))
+      cat(c('', sep='\n\n\n'))
+    }
+  } else {
+    
+    #### Overall table summary - table with entries
+    vars <- data.frame(cbind(seq(1:length(colnames(myTable))),colnames(myTable)))
+    colnames(vars) <- c("Variable Number","Table Attribute Columns")
+#     print (knitr::kable(vars, align='l', caption="Table Variables", padding=0))
+#     cat(c('', sep='\n\n\n'))
+        
+    ###########################################3 
+    #Create informative list on table variables
+    colNames <- as.character(col$COLUMN_NAME[which(col$TABLE_NAME==myTableName)])
+    colNums <- col$ORDINAL_POSITION[which(col$TABLE_NAME==myTableName)]
+    colTypes <- as.character(col$DATA_TYPE[which(col$TABLE_NAME==myTableName)])
+    colTypes2 <- as.character(lapply(myTable, function(x) class(x)[1]))
+    varsNA <- as.numeric(colSums(is.na(myTable)))
+    varsBlank <- apply(myTable, 2, function(x) length(which((x==""))))
+    vars2 <- data.frame(cbind(colNums, colNames, colTypes, colTypes2, varsNA, varsBlank, 
+                              paste(round(100*((varsNA+varsBlank)/dim(myTable)[1]),2), "%", sep="")))
+#     rownames(vars2) <- c()
+    colnames(vars2) <- c("VariableNumber","TableAttributeColumns","DataType", "DataClass", 
+                         "Number NA", "Number Blank", "Missing Percentage")  
+    print (knitr::kable(vars2, align='l', caption="Table Variables", padding=0))
+    cat(c('', sep='\n\n\n'))
+    
+    ##########################################
+    ##########################################
+#     print (knitr::kable(gsub('\032','',summary(myTable, maxsum=5)), align='l', caption="Table Variable Summary", padding=0))
+#     print (knitr::kable(data.frame(cbind(gsub('\032','',names(summary(myTable[,26], maxsum=5))),as.numeric(summary(myTable[,26], maxsum=5))))))
+#     cat(c('', sep='\n\n\n'))
+
+    overallSumStats <- matrix(NA, ncol=1, nrow=7)
+    rownames(overallSumStats) <- c('Min', '1st Quartile', 'Median', 'Mean', '3rd Quartile', 'Maximum', 'NAs') 
+    overallVarNames <- c('setupcol')
+
+    overallBinary <- matrix(NA, ncol=1, nrow=4)
+    rownames(overallBinary) <- c('Yes', 'No', 'NAs', 'Blank/Missing') 
+    overallBinaryNames <- c('setupcol')
+
+    noEntryVarNums <- c()
+    noEntryVars <- c()
+    #### Individual Variable summaries
+    for (j in 1:dim(myTable)[2]) {
+#       if (length(unique(myTable[,j]))<=100) {
+#         cat (sprintf('* %i) %s', j, colnames(myTable[j])))
+# #         cat (sprintf('* %s', myTableName), sprintf('%i) %s', j, colnames(myTable[j])), sep=': ')
+#         cat(c('', sep='\n\n\n'))
+        
+        if (dim(table(myTable[,j]))==0) {
+          noEntryVarNums <- c(noEntryVarNums, j)
+          noEntryVars <- c(noEntryVars, colnames(myTable[j]))
+#           cat (sprintf('* %i) %s', j, colnames(myTable[j])))
+#         cat (sprintf('* %s', myTableName), sprintf('%i) %s', j, colnames(myTable[j])), sep=': ')
+# #           cat(c('', sep='\n\n\n'))
+#           cat(c('', sep='\n\n\n'))
+#           cat ('No entries for this variable')
+#           cat(c('', sep='\n\n\n'))
+#           cat(c('', sep='\n\n\n'))
+        } else {
+          
+          ## Numeric Variables
+          if (vars2$DataClass[j] %in% c('numeric','integer') & length(unique(myTable[,j]))>15) {
+            
+            
+            #             print (knitr::kable(gsub('\032','',summary(myTable[,j], maxsum=5)), align='l', 
+#                                 caption="Table Variable Summary", padding=0))
+            sumTable <- data.frame(cbind(gsub('\032','',names(summary(myTable[,j], maxsum=5))),
+                                                 as.numeric(summary(myTable[,j], maxsum=5))))
+#             colnames(sumTable) <- c('Stat', 'Value')
+            colnames(sumTable) <- c()
+#             print (knitr::kable(sumTable, padding=1, format='html', align='l', table.attr='cellpadding="5"'))
+#             cat(c('', sep='\n\n\n'))
+            sumTableVals <- as.numeric(as.character(sumTable[,2]))
+            if (length(sumTableVals)<7) { sumTableVals <- c(sumTableVals,0) }
+            overallSumStats <- cbind(overallSumStats, sumTableVals)
+            overallVarNames <- c(overallVarNames, sprintf('%i) %s', j, colnames(myTable[j])))
+          
+          ## Numeric Variables
+          } else if (vars2$DataClass[j] %in% c('numeric','integer') & length(unique(myTable[,j]))<=15) {
+            
+            #             print (knitr::kable(gsub('\032','',summary(myTable[,j], maxsum=5)), align='l', 
+#                                 caption="Table Variable Summary", padding=0))
+            sumTable <- data.frame(cbind(gsub('\032','',names(summary(myTable[,j], maxsum=5))),
+                                                 as.numeric(summary(myTable[,j], maxsum=5))))
+#             colnames(sumTable) <- c('Stat', 'Value')
+            colnames(sumTable) <- c()
+#             print (knitr::kable(sumTable, padding=1, format='html', align='l', table.attr='cellpadding="5"'))
+#             cat(c('', sep='\n\n\n'))
+            sumTableVals <- as.numeric(as.character(sumTable[,2]))
+            if (length(sumTableVals)<7) { sumTableVals <- c(sumTableVals,0) }
+            overallSumStats <- cbind(overallSumStats, sumTableVals)
+            overallVarNames <- c(overallVarNames, sprintf('%i) %s', j, colnames(myTable[j])))
+
+          ## Date Variables
+          } else if (vars2$DataClass[j] %in% c("POSIXct", "POSIXt")) {
+            
+            #             print (knitr::kable(gsub('\032','',summary(myTable[,j], maxsum=5)), align='l', 
+#                                 caption="Table Variable Summary", padding=0))
+            
+            sumTableLabs <- names(summary(myTable[,j], maxsum=5))
+            sumTableVals <- c()
+            for (k in 1:length(summary(myTable[,j]))) { 
+              sumTableVals <- c(sumTableVals, as.character(as.Date(summary(myTable[,j], maxsum=5))[[k]])) }
+                        
+            sumTable <- data.frame(cbind(sumTableLabs, sumTableVals))
+#             colnames(sumTable) <- c('Stat', 'Value')
+            colnames(sumTable) <- c()
+#             print (knitr::kable(sumTable, padding=1, format='html', align='l', table.attr='cellpadding="5"'))
+#             cat(c('', sep='\n\n\n'))
+#             sumTableVals <- as.numeric(as.character(sumTable[,2]))
+            if (length(sumTableVals)<7) { sumTableVals <- c(sumTableVals,0) }
+            overallSumStats <- cbind(overallSumStats, sumTableVals)
+            overallVarNames <- c(overallVarNames, sprintf('%i) %s', j, colnames(myTable[j])))
+          
+          ## Binary Variables
+          } else if (c('TRUE') %in% (c('Y', 'N') %in% names(summary(myTable[,j])) & length(unique(myTable[,j]))<=4) & length(unique(myTable[,j]))<=4) {
+            
+            #             print (knitr::kable(gsub('\032','',summary(myTable[,j], maxsum=5)), align='l', 
+#                                 caption="Table Variable Summary", padding=0))
+            
+
+
+###############################################
+###############################################
+###############################################
+#             cat (sprintf('* %i) %s', j, colnames(myTable[j])))
+#         cat (sprintf('* %s', myTableName), sprintf('%i) %s', j, colnames(myTable[j])), sep=': ')
+#             cat(c('', sep='\n\n\n'))
+            varTable <- melt(summary(myTable[,j], maxsum=length(unique(myTable[,j]))))
+            varTable <- data.frame(cbind(rownames(varTable), varTable[,1]))
+            varTable[,1] <- gsub("\032","",varTable[,1])
+            varTable[,2] <- gsub("\032","",varTable[,2])
+            colnames(varTable) <- c("cat", "freq")
+#             colnames(varTable) <- c(colnames(myTable[j]), "freq")
+            varTable$freq <- as.numeric(as.character(varTable$freq))
+
+            binaryAdd <- c()
+
+            binaryAdd <- c(binaryAdd, ifelse(c("Y") %in% varTable$cat, varTable$freq[which(varTable$cat=="Y")], 0))
+            binaryAdd <- c(binaryAdd, ifelse(c("N") %in% varTable$cat, varTable$freq[which(varTable$cat=="N")], 0))
+            binaryAdd <- c(binaryAdd, ifelse(c("NA's") %in% varTable$cat, varTable$freq[which(varTable$cat=="NA's")], 0))
+            binaryAdd <- c(binaryAdd, ifelse(c("") %in% varTable$cat, varTable$freq[which(varTable$cat=="")], 0))
+
+            overallBinary <- cbind(overallBinary, binaryAdd)
+            overallBinaryNames <- c(overallBinaryNames, sprintf('%i) %s', j, colnames(myTable[j])))
+            
+          ## Categorical Variables
+          } else {
+            
+
+#             cat (sprintf('* %i) %s', j, colnames(myTable[j])))
+# #         cat (sprintf('* %s', myTableName), sprintf('%i) %s', j, colnames(myTable[j])), sep=': ')
+#             cat(c('', sep='\n\n\n'))
+#             varTable <- melt(table(myTable[,j]))
+#             varTable[,1] <- gsub("\032","",varTable[,1])
+#             varTable[,2] <- gsub("\032","",varTable[,2])
+#             colnames(varTable) <- c("val", "freq")
+# #             colnames(varTable) <- c(colnames(myTable[j]), "freq")
+#             varTable$freq <- as.numeric(as.character(varTable$freq))
+#             varTableOrd <- data.frame(cbind(varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),1], 
+#                                             varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),2]))
+#             colnames(varTableOrd) <- colnames(varTable)
+#             varTableOrd$freq <- as.numeric(as.character(varTableOrd$freq))
+# #             varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),1:2]
+#             colnames(varTableOrd)[2] <- c('       freq')
+#             print (knitr::kable(varTableOrd, format='html', table.attr='cellpadding="5"'))      
+# #             print (knitr::kable(varTable, align='l'))      
+#             cat(c('', sep='\n\n\n'))
+
+            ## Categorical Variables
+            cat (sprintf('* %i) %s', j, colnames(myTable[j])))
+#         cat (sprintf('* %s', myTableName), sprintf('%i) %s', j, colnames(myTable[j])), sep=': ')
+            cat(c('', sep='\n\n\n'))
+            varTable <- melt(summary(myTable[,j], maxsum=length(unique(myTable[,j]))))
+            varTable <- data.frame(cbind(rownames(varTable), varTable[,1]))
+            varTable[,1] <- gsub("\032","",varTable[,1])
+            varTable[,2] <- gsub("\032","",varTable[,2])
+            colnames(varTable) <- c("cat", "freq")
+#             colnames(varTable) <- c(colnames(myTable[j]), "freq")
+            varTable$freq <- as.numeric(as.character(varTable$freq))
+            varTableOrd <- data.frame(cbind(varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),1], 
+                                            varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),2]))
+            colnames(varTableOrd) <- colnames(varTable)
+            varTableOrd$freq <- as.numeric(as.character(varTableOrd$freq))
+#             varTable[order(-(varTable$freq)),][1:min(length(varTable$freq),10),1:2]
+
+            colnames(varTableOrd)[2] <- c('       freq')
+#             print (knitr::kable(varTableOrd, format='html', table.attr='cellpadding="5"'))      
+#             print (knitr::kable(varTable, align='l'))      
+            cat(c('', sep='\n\n\n'))
+
+            ######################################
+            ##### Plot #####
+            ######################################
+
+           
+            cat(c('', sep='\n\n\n'))
+            cat(c('', sep='\n\n\n'))
+            cat(c('', sep='\n\n\n'))
+
+            varTableOrd_plot <- varTableOrd[!(varTableOrd$cat) %in% c("NA's", "N/A", "", "None", "none", "NONE"),]
+            varTableOrd_plot$cat <- sapply(1, function(x) sprintf("#%s %s", rownames(varTableOrd_plot), 
+                                                                  strtrim(as.character(varTableOrd_plot$cat), 25)))            
+
+            varTableOrd_miss <- varTableOrd[(varTableOrd$cat) %in% c("NA's", "N/A", "", "None", "none", "NONE"),]
+
+            orderList <- as.character(varTableOrd_plot$cat)
+            varTableOrd_plot <- transform (varTableOrd_plot, cat=factor(cat, levels=orderList))
+            colnames(varTableOrd_plot) <- c('cat', 'freq')
+
+            sumTabNames <- c('type:', '# of unique values:', '% NA / None / Blank:')
+            sumTabVals <- c(class(myTable[,j]), length(unique(myTable[,j])), 
+                            paste0(round(sum(varTableOrd_miss[,2])/length(myTable[,j])*100,4), '%'))
+            sumTab <- cbind(sumTabNames, sumTabVals)
+            colnames(sumTab) <- c()
+            sumTab <- cbind(c(sumTab[1:2,1],sprintf("# %s:",as.character(varTableOrd_miss[,1])),sumTab[3,1]), 
+                            c(sumTab[1:2,2],varTableOrd_miss[,2],sumTab[3,2]))
+
+            g2 <- ggplot(data=varTableOrd_plot, aes(x=cat,  y=freq, fill=cat)) + geom_bar(stat='identity')
+            g2 <- g2 + theme(axis.text.x=element_text(angle=90, hjust=1), axis.title.x=element_blank(), 
+                             axis.title.y=element_blank(), legend.position='none')
+
+            t1 <- tableGrob(data.frame(sumTab), cols=c('X1', 'X2'), gpar.coretext=gpar(fontsize=8, lineheight=1, cex=0.8),
+                            gpar.coltext=gpar(fontsize=8, lineheight=1, cex=0.8), 
+                            show.rownames=FALSE, show.colnames=FALSE,
+                            equal.height=TRUE, padding.v = unit(1.65, 'mm'), , padding.h = unit(5, 'mm'), 
+                            core.just='left', vjust='center', 
+                            gpar.corefill=gpar(fill=rgb(255, 255, 255, maxColorValue=255), alpha=1, col=NA),
+                            show.box=TRUE, separator='black')
+            
+            varTableOrd$cat <- sapply(1, function(x) strtrim(as.character(varTableOrd$cat), 35)) 
+            varTableOrd$cat <- sapply(lapply(varTableOrd$cat, strwrap, width=25), paste, collapse="\n")
+
+            t2 <- tableGrob(varTableOrd, cols=c('cat', 'freq'), gpar.coretext=gpar(fontsize=8, lineheight=1, cex=0.8),
+                            gpar.coltext=gpar(fontsize=8, lineheight=1, cex=0.8),
+                            gpar.rowtext=gpar(fontsize=8, lineheight=1, cex=0.8),
+                            show.rownames=TRUE, show.colnames=TRUE,
+                            equal.height=TRUE, padding.v = unit(1.65, 'mm'), padding.h = unit(5, 'mm'), core.just='left',
+                            gpar.corefill=gpar(fill=rgb(255, 255, 255, maxColorValue=255), alpha=1, col=NA))              
+
+            grid.arrange(g2, arrangeGrob(t1, t2, ncol=1, heights=c(0.3, 0.7)), ncol=2)
+
+            cat(c('', sep='\n\n\n'))
+            cat(c('', sep='\n\n\n'))
+
+
+          }
+        }
+      }
+
+
+    ############################
+    ## Overall Summary Tables ##
+    ############################
+
+    #Print summary stats for numeric variables
+    if (dim(overallSumStats)[1]>0) {
+      cat(c('', sep='\n\n\n'))
+      cat(c('#### Summary Statistics of Numerical Variables'))
+      cat(c('', sep='\n\n\n'))
+      colnames(overallSumStats) <- overallVarNames
+      overallSumStats <- t(ofverallSumStats[,-1])
+      print (knitr::kable(overallSumStats, padding=3, table.attr='cellpadding="3"'))
+  # print (knitr::kable(sumTable, padding=1, format='html', align='l', table.attr='cellpadding="5"'))
+      cat(c('', sep='\n\n\n'))
+      cat(c('', sep='\n\n\n'))
+  
+      ## Boxplots of numeric variables
+      cat(c('', sep='\n\n\n'))
+      par(mfrow=c(1,1))
+      par(mar=c(5,8,8,1))
+  
+      #Normalize Data
+      singValCol <- c()
+      dNum <- apply(overallSumStats, 2, as.numeric)
+      rownames(dNum) <- rownames(overallSumStats)
+      colnames(dNum) <- colnames(overallSumStats)
+      dNumInit <- dNum[complete.cases(dNum),]
+  
+      if (is.null(dim(dNumInit)) && length(dNumInit)==7 && sum(complete.cases(dNum))==1) {
+        dNumInit <- matrix(dNumInit, nrow=1, ncol=7)
+        rownames(dNumInit) <- rownames(dNum)[complete.cases(dNum)] 
+        colnames(dNumInit) <- colnames(overallSumStats)
+        dNum <- rownames(dNumInit)
+      } else if (!is.null(dim(dNumInit)) && (length(dNumInit)==7 || ncol(dNumInit)==7) && sum(complete.cases(dNum))>0) {
+        dNum <- rownames(dNumInit)
+      } else {
+        dNum <- c()
+      }
+    
+      if (!is.null(dNum)) {
+        dNumName <- unlist(lapply(dNum, function(x) substr(x, which(strsplit((x), "")[[1]]==")")+2, nchar(x))))
+        dNum <- myTable[,dNumName]
+    
+        dNum_norm <- dNum
+        for (i in 1:length(dNumName)) {
+          if (length(dNumName)==1) {
+            tmp <- dNum
+            if (min(tmp,na.rm=T)==max(tmp,na.rm=T)) {
+              dNum_norm <- tmp
+              singValCol <- c(singValCol, names(dNum))
+            } else {
+              dNum_norm <- (tmp - min(tmp, na.rm=T)) / (max(tmp,na.rm=T)-min(tmp, na.rm=T))
+            }
+          } else {
+            tmp <- dNum[,i]
+            if (min(tmp,na.rm=T)==max(tmp,na.rm=T)) {
+              dNum_norm[,i] <- tmp
+              singValCol <- c(singValCol, names(dNum[,i]))
+            } else {
+              dNum_norm[,i] <- (tmp - min(tmp, na.rm=T)) / (max(tmp,na.rm=T)-min(tmp, na.rm=T))
+            }
+          }
+        }
+        
+        ranks <- names(sort(rank(sapply(colnames(dNum_norm), function(x) {
+          as.numeric(quantile(dNum_norm[,x], 0.75, na.rm=T))
+        }))))
+        
+        dNum_norm_m <- melt(as.matrix(dNum_norm))
+        if (length(dNumName)>1) {
+          dNum_norm_m$X2 <- factor(dNum_norm_m$X2, ranks)
+        } else {
+          dNum_norm_m$X2 <- factor(dNumName)
+        }
+        
+        gg <- ggplot(dNum_norm_m, aes(x=X2, y=value))
+        gg <- gg + geom_boxplot(fill='steelblue', notch=F, outlier.size=1)
+        gg <- gg + labs(x="")
+        gg <- gg + theme_bw()
+        gg <- gg + theme(panel.grid=element_blank())
+        gg <- gg + theme(axis.text.x=element_text(angle=90, hjust=1), axis.title.y=element_blank())
+        gg <- gg + ggtitle("Numeric Variables Boxplots")
+    #     grid.arrange(g2, arrangeGrob(t1, t2, ncol=1, heights=c(0.3, 0.7)), ncol=2)    
+        grid.arrange(gg)
+      }
+  
+      cat(c('', sep='\n\n\n'))
+      cat(c('', sep='\n\n\n'))
+    }
+
+    #List binary variables
+    if (dim(t(overallBinary[,-1]))[1]>0) {
+      cat(c('', sep='\n\n\n'))
+      cat(c('#### Summary Statistics of Binary Variables'))
+      cat(c('', sep='\n\n\n'))
+      colnames(overallBinary) <- overallBinaryNames
+      overallBinary <- t(overallBinary[,-1])
+      rownames(overallBinary) <- overallBinaryNames[-1]
+      print (knitr::kable(overallBinary, padding=3, table.attr='cellpadding="3"'))
+  # print (knitr::kable(sumTable, padding=1, format='html', align='l', table.attr='cellpadding="5"'))
+      cat(c('', sep='\n\n\n'))
+      cat(c('', sep='\n\n\n'))
+    }
+
+    #List variables with no entries
+    if (!is.null(noEntryVars)) {
+      if (dim(noEntryVars)[1]>0 || length(noEntryVars)>0) {
+        cat(c('', sep='\n\n\n'))
+        cat(c('#### Summary of Table Attributes (variables) with no entries'))
+        cat(c('', sep='\n\n\n'))
+        noEntryVars <- data.frame(cbind(noEntryVarNums, noEntryVars))
+        colnames(noEntryVars) <- c('varNum', 'TableAttributeColumn')
+        print (knitr::kable(noEntryVars, padding=3, table.attr='cellpadding="3"'))
+        cat(c('', sep='\n\n\n'))
+        cat(c('', sep='\n\n\n'))
+      }
+    }
+
+   }
+}
+```
+
+```{r, echo=FALSE, results='asis', eval=TRUE}
+cat(c('', sep='\n\n\n'))
+cat ('=========================================================')
+cat(c('', sep='\n\n\n'))
+```  
+
+
+
+
+
+
+
+
+```{r, echo=FALSE}
+close(conn)
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+
+#Find unique ids in all tables (make list of tables, store df, )
+#table_char_vect is a character vector with table names
+#returns a data frame with table names and unique identifiers for the table based on a random 1000 sampling of the table
+get_unique_ids <- function(table_char_vect, conn){
+  
+  #get initial data frame
+  initial_df <- get_table_sample(conn, table_char_vect[1], 1000)
+  unique_cols <- find_unique_id(initial_df)
+  ifelse(!is.null(unique_cols), accum_df <- data.frame(table = rep(table_char_vect[1], length(unique_cols)), unique_id = unique_cols), accum_df <- data.frame(table = table_char_vect[1], unique_id = NA))
+  
+  #If there's more than one table in the list, run over all the tables and bind the data frame rows together
+  if(length(table_char_vect > 1)){
+    
+    for (table1 in table_char_vect[2:length(table_char_vect)]){
+      
+      table_df <- get_table_sample(conn, table1, 1000)
+      unique_cols <- find_unique_id(table_df)
+      ifelse(!is.null(unique_cols), new_df <- data.frame(table = rep(table1, length(unique_cols)), unique_id = unique_cols), new_df <- data.frame(table = table1, unique_id = NA))
+      accum_df <- rbind(accum_df, new_df)
+    }
+    
+    #Return the final binded df
+    accum_df
+  }
+  else{
+    
+    #return the single table df
+    initial_df
+  }
+}
+
+```
+
+
